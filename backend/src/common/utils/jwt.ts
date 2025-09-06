@@ -1,56 +1,56 @@
 import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
-import { SessionDocument } from "../../database/models/session.model";
-import { UserDocument } from "../../database/models/user.model";
 import { config } from "../../config/app.config";
 
+// Payload pour AccessToken
 export type AccessTPayload = {
-  userId: UserDocument["_id"];
-  sessionId: SessionDocument["_id"];
+  userId: number;      // Sequelize utilise un id numérique
+  sessionId: number;
 };
 
+// Payload pour RefreshToken
 export type RefreshTPayload = {
-  sessionId: SessionDocument["_id"];
+  sessionId: number;
 };
 
 type SignOptsAndSecret = SignOptions & {
   secret: string;
 };
 
-const defaults: SignOptions = {
-  audience: ["user"],
-};
 
+// Access Token options
 export const accessTokenSignOptions: SignOptsAndSecret = {
-  expiresIn: config.JWT.EXPIRES_IN,
+  expiresIn: config.JWT.EXPIRES_IN as any,
   secret: config.JWT.SECRET,
 };
 
+// Refresh Token options
 export const refreshTokenSignOptions: SignOptsAndSecret = {
-  expiresIn: config.JWT.REFRESH_EXPIRES_IN,
+  expiresIn: config.JWT.REFRESH_EXPIRES_IN as any,
   secret: config.JWT.REFRESH_SECRET,
 };
 
+// Générer un JWT
 export const signJwtToken = (
   payload: AccessTPayload | RefreshTPayload,
   options?: SignOptsAndSecret
 ) => {
-  const { secret, ...opts } = options || accessTokenSignOptions;
+  const { secret, ...opts } = options ?? accessTokenSignOptions;
   return jwt.sign(payload, secret, {
-    ...defaults,
     ...opts,
   });
 };
 
+// Vérifier un JWT
 export const verifyJwtToken = <TPayload extends object = AccessTPayload>(
   token: string,
   options?: VerifyOptions & { secret: string }
 ) => {
   try {
-    const { secret = config.JWT.SECRET, ...opts } = options || {};
+    const { secret = config.JWT.SECRET, ...opts } = options ?? {};
     const payload = jwt.verify(token, secret, {
-      ...defaults,
       ...opts,
-    }) as TPayload;
+    }) as unknown as TPayload;
+
     return { payload };
   } catch (err: any) {
     return {

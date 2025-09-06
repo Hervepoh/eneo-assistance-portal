@@ -37,7 +37,7 @@ export const setupJwtStrategy = (passport: PassportStatic) => {
   passport.use(
     new JwtStrategy(options, async (req, payload: JwtPayload, done) => {
       try {
-        const user = await userService.findUserById(payload.userId);
+        const user = await userService.findUserById(Number(payload.userId));
         if (!user) {
           return done(null, false);
         }

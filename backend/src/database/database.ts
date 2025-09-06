@@ -1,12 +1,21 @@
-import { Sequelize } from "sequelize";
+import { Dialect, Sequelize } from "sequelize";
 import { config } from "../config/app.config";
+
+const { NAME, USER, PASSWORD, HOST, PORT, DIALECT } = config.DATABASE;
+
+export const sequelize = new Sequelize(NAME, USER, PASSWORD, {
+  host: HOST,
+  port: PORT as unknown as number,
+  dialect: DIALECT as Dialect,
+  logging: false,
+});
 
 const connectDatabase = async () => {
   try {
-    await mongoose.connect(config.MONGO_URI);
-    console.log("Connected to Mongo database");
+    await sequelize.authenticate();
+    console.log("✅ Connected to MySQL database");
   } catch (error) {
-    console.log("Error connecting to Mongo database");
+    console.error("❌ Error connecting to MySQL database:", error);
     process.exit(1);
   }
 };

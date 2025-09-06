@@ -1,47 +1,76 @@
-import mongoose from "mongoose";
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "../database";
+import UserModel from "./user.model";
 import { VerificationEnum } from "../../common/enums/verification-code.enum";
-import { Schema } from "mongoose";
 import { generateUniqueCode } from "../../common/utils/uuid";
 
-export interface VerificationCodeDocument extends Document {
-  userId: mongoose.Types.ObjectId;
+interface VerificationCodeAttributes {
+  id: number;
+  userId: number;
   code: string;
   type: VerificationEnum;
   expiresAt: Date;
-  createdAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const verificationCodeSchema = new Schema<VerificationCodeDocument>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    index: true,
-    required: true,
-  },
-  code: {
-    type: String,
-    unique: true,
-    required: true,
-    default: generateUniqueCode,
-  },
-  type: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  expiresAt: {
-    type: Date,
-    required: true,
-  },
-});
+// Optionnel lors de la création : id, createdAt, updatedAt, code
+interface VerificationCodeCreationAttributes
+  extends Optional<VerificationCodeAttributes, "id" | "createdAt" | "updatedAt" | "code"> {}
 
-const VerificationCodeModel = mongoose.model<VerificationCodeDocument>(
-  "VerificationCode",
-  verificationCodeSchema,
-  "verification_codes"
+export class VerificationCodeModel extends Model<
+  VerificationCodeAttributes,
+  VerificationCodeCreationAttributes
+> implements VerificationCodeAttributes {
+  public id!: number;
+  public userId!: number;
+  public code!: string;
+  public type!: VerificationEnum;
+  public expiresAt!: Date;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+VerificationCodeModel.init(
+  {
+    id: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      references: {
+        model: UserModel,
+        key: "id",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    },
+    code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      defaultValue: generateUniqueCode,
+    },
+    type: {
+      type: DataTypes.ENUM(...Object.values(VerificationEnum)),
+      allowNull: false,
+    },
+    expiresAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  },
+  {
+    sequelize,
+    tableName: "verification_codes",
+    timestamps: true,
+  }
 );
+
+VerificationCodeModel.belongsTo(UserModel, { foreignKey: "userId", as: "user" });
 
 export default VerificationCodeModel;

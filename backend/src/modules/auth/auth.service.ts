@@ -1,11 +1,11 @@
-import jwt from "jsonwebtoken";
-import { ErrorCode } from "../../common/enums/error-code.enum";
-import { VerificationEnum } from "../../common/enums/verification-code.enum";
+import { Op } from "sequelize";
 import {
   LoginDto,
   RegisterDto,
   resetPasswordDto,
 } from "../../common/interface/auth.interface";
+import { ErrorCode } from "../../common/enums/error-code.enum";
+import { VerificationEnum } from "../../common/enums/verification-code.enum";
 import {
   BadRequestException,
   HttpException,
@@ -43,9 +43,7 @@ export class AuthService {
   public async register(registerData: RegisterDto) {
     const { name, email, password } = registerData;
 
-    const existingUser = await UserModel.exists({
-      email,
-    });
+    const existingUser = await UserModel.findOne({ where: { email } });
 
     if (existingUser) {
       throw new BadRequestException(
@@ -53,39 +51,30 @@ export class AuthService {
         ErrorCode.AUTH_EMAIL_ALREADY_EXISTS
       );
     }
-    const newUser = await UserModel.create({
-      name,
-      email,
-      password,
-    });
 
-    const userId = newUser._id;
+    const newUser = await UserModel.create({ name, email, password });
 
     const verification = await VerificationCodeModel.create({
-      userId,
+      userId: newUser.id,
       type: VerificationEnum.EMAIL_VERIFICATION,
       expiresAt: fortyFiveMinutesFromNow(),
     });
 
-    // Sending verification email link
     const verificationUrl = `${config.APP_ORIGIN}/confirm-account?code=${verification.code}`;
     await sendEmail({
       to: newUser.email,
       ...verifyEmailTemplate(verificationUrl),
     });
 
-    return {
-      user: newUser,
-    };
+    return { user: newUser };
   }
 
   public async login(loginData: LoginDto) {
     const { email, password, userAgent } = loginData;
 
     logger.info(`Login attempt for email: ${email}`);
-    const user = await UserModel.findOne({
-      email: email,
-    });
+
+    const user = await UserModel.findOne({ where: { email } });
 
     if (!user) {
       logger.warn(`Login failed: User with email ${email} not found`);
@@ -104,9 +93,8 @@ export class AuthService {
       );
     }
 
-    // Check if the user enable 2fa retuen user= null
     if (user.userPreferences.enable2FA) {
-      logger.info(`2FA required for user ID: ${user._id}`);
+      logger.info(`2FA required for user ID: ${user.id}`);
       return {
         user: null,
         mfaRequired: true,
@@ -115,26 +103,18 @@ export class AuthService {
       };
     }
 
-    logger.info(`Creating session for user ID: ${user._id}`);
-    const session = await SessionModel.create({
-      userId: user._id,
-      userAgent,
-    });
+    const session = await SessionModel.create({ userId: user.id, userAgent });
 
-    logger.info(`Signing tokens for user ID: ${user._id}`);
     const accessToken = signJwtToken({
-      userId: user._id,
-      sessionId: session._id,
+      userId: user.id,
+      sessionId: session.id,
     });
 
     const refreshToken = signJwtToken(
-      {
-        sessionId: session._id,
-      },
+      { sessionId: session.id },
       refreshTokenSignOptions
     );
 
-    logger.info(`Login successful for user ID: ${user._id}`);
     return {
       user,
       accessToken,
@@ -152,13 +132,13 @@ export class AuthService {
       throw new UnauthorizedException("Invalid refresh token");
     }
 
-    const session = await SessionModel.findById(payload.sessionId);
-    const now = Date.now();
+    const session = await SessionModel.findByPk(payload.sessionId);
 
     if (!session) {
       throw new UnauthorizedException("Session does not exist");
     }
 
+    const now = Date.now();
     if (session.expiredAt.getTime() <= now) {
       throw new UnauthorizedException("Session expired");
     }
@@ -167,49 +147,38 @@ export class AuthService {
       session.expiredAt.getTime() - now <= ONE_DAY_IN_MS;
 
     if (sessionRequireRefresh) {
-      session.expiredAt = calculateExpirationDate(
-        config.JWT.REFRESH_EXPIRES_IN
-      );
+      session.expiredAt = calculateExpirationDate(config.JWT.REFRESH_EXPIRES_IN);
       await session.save();
     }
 
     const newRefreshToken = sessionRequireRefresh
-      ? signJwtToken(
-          {
-            sessionId: session._id,
-          },
-          refreshTokenSignOptions
-        )
+      ? signJwtToken({ sessionId: session.id }, refreshTokenSignOptions)
       : undefined;
 
     const accessToken = signJwtToken({
       userId: session.userId,
-      sessionId: session._id,
+      sessionId: session.id,
     });
 
-    return {
-      accessToken,
-      newRefreshToken,
-    };
+    return { accessToken, newRefreshToken };
   }
 
   public async verifyEmail(code: string) {
     const validCode = await VerificationCodeModel.findOne({
-      code: code,
-      type: VerificationEnum.EMAIL_VERIFICATION,
-      expiresAt: { $gt: new Date() },
+      where: {
+        code,
+        type: VerificationEnum.EMAIL_VERIFICATION,
+        expiresAt: { [Op.gt]: new Date() },
+      },
     });
 
     if (!validCode) {
       throw new BadRequestException("Invalid or expired verification code");
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      validCode.userId,
-      {
-        isEmailVerified: true,
-      },
-      { new: true }
+    const [updatedRows, [updatedUser]] = await UserModel.update(
+      { isEmailVerified: true },
+      { where: { id: validCode.userId }, returning: true }
     );
 
     if (!updatedUser) {
@@ -219,29 +188,27 @@ export class AuthService {
       );
     }
 
-    await validCode.deleteOne();
-    return {
-      user: updatedUser,
-    };
+    await validCode.destroy();
+
+    return { user: updatedUser };
   }
 
   public async forgotPassword(email: string) {
-    const user = await UserModel.findOne({
-      email: email,
-    });
+    const user = await UserModel.findOne({ where: { email } });
 
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    //check mail rate limit is 2 emails per 3 or 10 min
     const timeAgo = threeMinutesAgo();
     const maxAttempts = 2;
 
-    const count = await VerificationCodeModel.countDocuments({
-      userId: user._id,
-      type: VerificationEnum.PASSWORD_RESET,
-      createdAt: { $gt: timeAgo },
+    const count = await VerificationCodeModel.count({
+      where: {
+        userId: user.id,
+        type: VerificationEnum.PASSWORD_RESET,
+        createdAt: { [Op.gt]: timeAgo },
+      },
     });
 
     if (count >= maxAttempts) {
@@ -254,14 +221,12 @@ export class AuthService {
 
     const expiresAt = anHourFromNow();
     const validCode = await VerificationCodeModel.create({
-      userId: user._id,
+      userId: user.id,
       type: VerificationEnum.PASSWORD_RESET,
       expiresAt,
     });
 
-    const resetLink = `${config.APP_ORIGIN}/reset-password?code=${
-      validCode.code
-    }&exp=${expiresAt.getTime()}`;
+    const resetLink = `${config.APP_ORIGIN}/reset-password?code=${validCode.code}&exp=${expiresAt.getTime()}`;
 
     const { data, error } = await sendEmail({
       to: user.email,
@@ -272,17 +237,16 @@ export class AuthService {
       throw new InternalServerException(`${error?.name} ${error?.message}`);
     }
 
-    return {
-      url: resetLink,
-      emailId: data.id,
-    };
+    return { url: resetLink, emailId: data.id };
   }
 
   public async resePassword({ password, verificationCode }: resetPasswordDto) {
     const validCode = await VerificationCodeModel.findOne({
-      code: verificationCode,
-      type: VerificationEnum.PASSWORD_RESET,
-      expiresAt: { $gt: new Date() },
+      where: {
+        code: verificationCode,
+        type: VerificationEnum.PASSWORD_RESET,
+        expiresAt: { [Op.gt]: new Date() },
+      },
     });
 
     if (!validCode) {
@@ -291,26 +255,23 @@ export class AuthService {
 
     const hashedPassword = await hashValue(password);
 
-    const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
-      password: hashedPassword,
-    });
+    const [updatedRows, [updatedUser]] = await UserModel.update(
+      { password: hashedPassword },
+      { where: { id: validCode.userId }, returning: true }
+    );
 
     if (!updatedUser) {
       throw new BadRequestException("Failed to reset password!");
     }
 
-    await validCode.deleteOne();
+    await validCode.destroy();
 
-    await SessionModel.deleteMany({
-      userId: updatedUser._id,
-    });
+    await SessionModel.destroy({ where: { userId: updatedUser.id } });
 
-    return {
-      user: updatedUser,
-    };
+    return { user: updatedUser };
   }
 
-  public async logout(sessionId: string) {
-    return await SessionModel.findByIdAndDelete(sessionId);
+  public async logout(sessionId: number) {
+    return await SessionModel.destroy({ where: { id: sessionId } });
   }
 }
