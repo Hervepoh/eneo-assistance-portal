@@ -35,6 +35,8 @@ class UserModel extends Model<UserAttributes, UserCreationAttributes> implements
 
   // Méthode custom
   public async comparePassword(value: string): Promise<boolean> {
+    console.log("value", value);
+    console.log("this.password",  this.password);
     return compareValue(value, this.password);
   }
 }
@@ -88,5 +90,9 @@ UserModel.init(
     },
   }
 );
+
+UserModel.addScope("withPassword", {
+  attributes: { include: ["password", "userPreferences"] },
+});
 
 export default UserModel;

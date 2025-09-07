@@ -17,8 +17,11 @@ interface JwtPayload {
 const options: StrategyOptionsWithRequest = {
   jwtFromRequest: ExtractJwt.fromExtractors([
     (req) => {
+      if (!req?.cookies) return null;
       const accessToken = req.cookies.accessToken;
+      console.log("accessToken", accessToken);
       if (!accessToken) {
+        console.log("❌ Cookie accessToken missing:", req.cookies);
         throw new UnauthorizedException(
           "Unauthorized access token",
           ErrorCode.AUTH_TOKEN_NOT_FOUND
@@ -28,7 +31,6 @@ const options: StrategyOptionsWithRequest = {
     },
   ]),
   secretOrKey: config.JWT.SECRET,
-  audience: ["user"],
   algorithms: ["HS256"],
   passReqToCallback: true,
 };
@@ -41,6 +43,9 @@ export const setupJwtStrategy = (passport: PassportStatic) => {
         if (!user) {
           return done(null, false);
         }
+
+        // On stocke la sessionId dans req pour l'utiliser dans les controllers
+        console.log("payload.sessionId", payload.sessionId);
         req.sessionId = payload.sessionId;
         return done(null, user);
       } catch (error) {

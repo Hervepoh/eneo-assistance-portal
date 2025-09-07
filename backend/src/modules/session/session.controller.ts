@@ -17,6 +17,9 @@ export class SessionController {
     const userId = req.user?.id;
     if (!userId) throw new NotFoundException("User not found in request");
 
+    console.log("userId", userId);
+    console.log("req.sessionId", req.sessionId);
+
     const { sessions } = await this.sessionService.getAllSession(userId);
 
     const modifySessions = sessions.map((session) => ({

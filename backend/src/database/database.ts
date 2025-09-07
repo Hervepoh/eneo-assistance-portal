@@ -14,6 +14,7 @@ const connectDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log("✅ Connected to MySQL database");
+    await sequelize.sync({ alter: true }); // créer les tables automatiquement
   } catch (error) {
     console.error("❌ Error connecting to MySQL database:", error);
     process.exit(1);

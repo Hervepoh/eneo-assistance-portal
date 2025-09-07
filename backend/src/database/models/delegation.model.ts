@@ -1,27 +1,27 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../database";
-import ApplicationGroupModel from "./applicationGroup.model";
+import RegionModel from "./region.model";
 
-interface ApplicationAttributes {
+interface DelegationAttributes {
   id: number;
   name: string;
-  groupId: number;
+  regionId?: number | null;
   isDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
 }
 
-interface ApplicationCreationAttributes
-  extends Optional<ApplicationAttributes, "id"  | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> {}
+interface DelegationCreationAttributes
+  extends Optional<DelegationAttributes, "id"  | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> {}
 
-export class ApplicationModel
-  extends Model<ApplicationAttributes, ApplicationCreationAttributes>
-  implements ApplicationAttributes
+export class DelegationModel
+  extends Model<DelegationAttributes, DelegationCreationAttributes>
+  implements DelegationAttributes
 {
   public id!: number;
   public name!: string;
-  public groupId!: number;
+  public regionId!: number | null;
   public isDeleted!: boolean;
 
   public readonly createdAt!: Date;
@@ -29,7 +29,7 @@ export class ApplicationModel
   public readonly deletedAt!: Date | null;
 }
 
-ApplicationModel.init(
+DelegationModel.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -40,11 +40,11 @@ ApplicationModel.init(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    groupId: {
+    regionId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
       references: {
-        model: ApplicationGroupModel,
+        model: RegionModel,
         key: "id",
       },
       onDelete: "SET NULL",
@@ -57,7 +57,7 @@ ApplicationModel.init(
   },
   {
     sequelize,
-    tableName: "applications",
+    tableName: "delegations",
     timestamps: true,
     paranoid: true, // soft delete
     underscored: true, // colonnes snake_case
@@ -65,7 +65,7 @@ ApplicationModel.init(
 );
 
 // Relations
-ApplicationModel.belongsTo(ApplicationGroupModel, { foreignKey: "groupId", as: "group" });
-ApplicationGroupModel.hasMany(ApplicationModel, { foreignKey: "groupId", as: "applications" });
+DelegationModel.belongsTo(RegionModel, { foreignKey: "regionId", as: "region" });
+RegionModel.hasMany(DelegationModel, { foreignKey: "regionId", as: "delegations" });
 
-export default ApplicationModel;
+export default DelegationModel;

@@ -9,7 +9,7 @@ import {
 import { setAuthenticationCookies } from "../../common/utils/cookie";
 
 export class MfaController {
-  private mfaService: MfaService;
+  private readonly mfaService: MfaService;
 
   constructor(mfaService: MfaService) {
     this.mfaService = mfaService;

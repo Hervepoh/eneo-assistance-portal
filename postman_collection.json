@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "Eneo Assistance Portal",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/auth/register", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","auth","register"] }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+        },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/auth/login", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","auth","login"] },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var jsonData = pm.response.json();",
+                "pm.environment.set(\"accessToken\", jsonData.data?.accessToken || jsonData.accessToken);",
+                "pm.environment.set(\"refreshToken\", jsonData.data?.refreshToken || jsonData.refreshToken);"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Verify Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"code\": \"PASTE_CODE_FROM_EMAIL\"\n}" },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/auth/verify-email", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","auth","verify-email"] }
+      }
+    },
+    {
+      "name": "Forgot Password",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{testEmail}}\"\n}" },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/auth/forgot-password", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","auth","forgot-password"] }
+      }
+    },
+    {
+      "name": "Reset Password",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"password\": \"newpassword123\",\n  \"verificationCode\": \"PASTE_CODE_FROM_EMAIL\"\n}" },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/auth/reset-password", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","auth","reset-password"] }
+      }
+    },
+    {
+      "name": "Get All Sessions",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/sessions", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","sessions"] }
+      }
+    },
+    {
+      "name": "MFA Setup",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/mfa/setup", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","mfa","setup"] },
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var jsonData = pm.response.json();",
+                "pm.environment.set(\"mfaSecret\", jsonData.secret);"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MFA Verify",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{mfaCode}}\",\n  \"secretKey\": \"{{mfaSecret}}\"\n}" },
+        "url": { "raw": "{{BASE_URL}}{{BASE_PATH}}/mfa/verify", "host": ["{{BASE_URL}}"], "path": ["{{BASE_PATH}}","mfa","verify"] }
+      }
+    }
+  ]
+}

@@ -69,12 +69,16 @@ export class AuthService {
     return { user: newUser };
   }
 
+
   public async login(loginData: LoginDto) {
     const { email, password, userAgent } = loginData;
 
     logger.info(`Login attempt for email: ${email}`);
 
-    const user = await UserModel.findOne({ where: { email } });
+    // Récupération du user avec mot de passe
+    const user = await UserModel.scope("withPassword").findOne({
+      where: { email },
+    });
 
     if (!user) {
       logger.warn(`Login failed: User with email ${email} not found`);
@@ -123,6 +127,7 @@ export class AuthService {
     };
   }
 
+  
   public async refreshToken(refreshToken: string) {
     const { payload } = verifyJwtToken<RefreshTPayload>(refreshToken, {
       secret: refreshTokenSignOptions.secret,
@@ -163,6 +168,7 @@ export class AuthService {
     return { accessToken, newRefreshToken };
   }
 
+
   public async verifyEmail(code: string) {
     const validCode = await VerificationCodeModel.findOne({
       where: {
@@ -176,10 +182,12 @@ export class AuthService {
       throw new BadRequestException("Invalid or expired verification code");
     }
 
-    const [updatedRows, [updatedUser]] = await UserModel.update(
+    await UserModel.update(
       { isEmailVerified: true },
-      { where: { id: validCode.userId }, returning: true }
+      { where: { id: validCode.userId } }
     );
+
+    const updatedUser = await UserModel.findByPk(validCode.userId);
 
     if (!updatedUser) {
       throw new BadRequestException(
@@ -192,6 +200,7 @@ export class AuthService {
 
     return { user: updatedUser };
   }
+
 
   public async forgotPassword(email: string) {
     const user = await UserModel.findOne({ where: { email } });
@@ -240,6 +249,7 @@ export class AuthService {
     return { url: resetLink, emailId: data.id };
   }
 
+
   public async resePassword({ password, verificationCode }: resetPasswordDto) {
     const validCode = await VerificationCodeModel.findOne({
       where: {
@@ -255,21 +265,28 @@ export class AuthService {
 
     const hashedPassword = await hashValue(password);
 
-    const [updatedRows, [updatedUser]] = await UserModel.update(
+    // Update password
+    await UserModel.update(
       { password: hashedPassword },
-      { where: { id: validCode.userId }, returning: true }
+      { where: { id: validCode.userId } }
     );
+
+    // Retrieve updated user
+    const updatedUser = await UserModel.findByPk(validCode.userId);
 
     if (!updatedUser) {
       throw new BadRequestException("Failed to reset password!");
     }
 
+    // Delete verification code
     await validCode.destroy();
 
+    // Destroy all sessions for this user
     await SessionModel.destroy({ where: { userId: updatedUser.id } });
 
     return { user: updatedUser };
   }
+
 
   public async logout(sessionId: number) {
     return await SessionModel.destroy({ where: { id: sessionId } });

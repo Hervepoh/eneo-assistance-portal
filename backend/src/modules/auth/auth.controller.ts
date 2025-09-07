@@ -38,7 +38,7 @@ export class AuthController {
   });
 
   public login = asyncHandler(async (req: Request, res: Response) => {
-    const userAgent = req.headers["user-agent"];
+    const userAgent = req.headers["user-agent"] || "unknown";
     const body = loginSchema.parse({ ...req.body, userAgent });
 
     const { user, accessToken, refreshToken, mfaRequired } =
