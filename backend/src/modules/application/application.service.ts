@@ -1,5 +1,5 @@
-import ApplicationModel from "../../database/models/application.model";
-import ApplicationGroupModel from "../../database/models/applicationGroup.model";
+import { ApplicationGroupModel, ApplicationModel } from "../../database/models";
+
 
 export class ApplicationService {
   async create(data: { name: string; groupId: number }) {

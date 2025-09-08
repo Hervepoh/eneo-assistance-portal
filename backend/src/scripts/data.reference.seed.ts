@@ -1,8 +1,7 @@
 import "dotenv/config";
 import { sequelize } from "../database/database";
-import { AgenceModel as Agence } from "../database/models/agency.model";
-import { DelegationModel as Delegation } from "../database/models/delegation.model";
-import { RegionModel as Region } from "../database/models/region.model";
+import { 
+  AgenceModel as Agence ,  DelegationModel as Delegation , RegionModel as Region} from "../database/models";
 
 const rawData = `
 DCUD#DVC DOUALA CENTRE#CSC_BASSA

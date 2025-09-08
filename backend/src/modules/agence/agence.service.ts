@@ -1,6 +1,7 @@
 
 import { NotFoundException } from "../../common/utils/catch-errors";
-import AgenceModel from "../../database/models/agency.model";
+import { AgenceModel } from "../../database/models";
+
 
 export class AgenceService {
   public async createAgence(data: { name: string; delegationId?: number }) {

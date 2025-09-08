@@ -3,6 +3,7 @@ import { z } from "zod";
 export const emailSchema = z.string().trim().email().min(1).max(255);
 export const passwordSchema = z.string().trim().min(6).max(255);
 export const verificationCodeSchema = z.string().trim().min(1).max(25);
+export const isLdapSchema = z.boolean();
 
 export const registerSchema = z
   .object({
@@ -21,6 +22,11 @@ export const loginSchema = z.object({
   password: passwordSchema,
   userAgent: z.string().optional(),
 });
+
+export const switchRoleSchema = z.object({
+  roleId: z.number().nonnegative()
+});
+
 
 export const verificationEmailSchema = z.object({
   code: verificationCodeSchema,

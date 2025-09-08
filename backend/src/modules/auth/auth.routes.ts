@@ -10,6 +10,10 @@ authRoutes.post("/login", loginLimiter, authController.login);
 authRoutes.post("/verify/email", authController.verifyEmail);
 authRoutes.post("/password/forgot", authController.forgotPassword);
 authRoutes.post("/password/reset", authController.resetPassword);
+
+authRoutes.post("/select-role", authenticateJWT, authController.switchRole);
+authRoutes.post("/switch-role", authenticateJWT, authController.switchRole);
+authRoutes.get("/me", authenticateJWT, authController.getCurrentUser);
 authRoutes.post("/logout", authenticateJWT, authController.logout);
 
 authRoutes.get("/refresh", authController.refreshToken);

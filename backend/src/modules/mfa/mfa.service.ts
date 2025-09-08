@@ -1,14 +1,14 @@
 import { Request } from "express";
 import speakeasy from "speakeasy";
 import qrcode from "qrcode";
-import UserModel from "../../database/models/user.model";
-import SessionModel from "../../database/models/session.model";
+
 import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
 } from "../../common/utils/catch-errors";
 import { refreshTokenSignOptions, signJwtToken } from "../../common/utils/jwt";
+import { SessionModel, UserModel } from "../../database/models";
 
 export class MfaService {
   public async generateMFASetup(req: Request) {

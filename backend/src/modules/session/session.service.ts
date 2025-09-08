@@ -1,7 +1,6 @@
-import { NotFoundException } from "../../common/utils/catch-errors";
-import SessionModel from "../../database/models/session.model";
-import UserModel from "../../database/models/user.model";
 import { Op } from "sequelize";
+import { NotFoundException } from "../../common/utils/catch-errors";
+import { SessionModel, SessionUserRolesPermissionsViewModel, UserModel } from "../../database/models";
 
 export class SessionService {
   // Récupérer toutes les sessions d'un utilisateur
@@ -38,6 +37,20 @@ export class SessionService {
     if (!session) throw new NotFoundException("Session not found");
 
     return { user: session.user, session };
+  }
+
+  public async getSessionByIdWithPermissions(sessionId: number) {
+    return await SessionUserRolesPermissionsViewModel.findAll({
+      where: { id: sessionId }
+    });
+  };
+
+  // Supprimer une session
+  public async updateSessionRole(sessionId: number, roleId: number) {
+    const session = await SessionModel.findByPk(sessionId);
+    if (!session) throw new NotFoundException("Session not found");
+    await session.update({ roleId });
+    return session;
   }
 
   // Supprimer une session

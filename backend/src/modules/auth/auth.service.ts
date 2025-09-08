@@ -20,9 +20,7 @@ import {
   ONE_DAY_IN_MS,
   threeMinutesAgo,
 } from "../../common/utils/date-time";
-import SessionModel from "../../database/models/session.model";
-import UserModel from "../../database/models/user.model";
-import VerificationCodeModel from "../../database/models/verification.model";
+
 import { config } from "../../config/app.config";
 import {
   refreshTokenSignOptions,
@@ -38,6 +36,10 @@ import {
 import { HTTPSTATUS } from "../../config/http.config";
 import { hashValue } from "../../common/utils/bcrypt";
 import { logger } from "../../common/utils/logger";
+import { PermissionModel, RoleModel, SessionModel, UserModel, VerificationCodeModel } from "../../database/models";
+import { UserType } from "../../common/types/user.type";
+
+
 
 export class AuthService {
   public async register(registerData: RegisterDto) {
@@ -52,7 +54,7 @@ export class AuthService {
       );
     }
 
-    const newUser = await UserModel.create({ name, email, password });
+    const newUser = await UserModel.create({ name, email, password, isActive: true });
 
     const verification = await VerificationCodeModel.create({
       userId: newUser.id,
@@ -66,7 +68,10 @@ export class AuthService {
       ...verifyEmailTemplate(verificationUrl),
     });
 
-    return { user: newUser };
+    // Retourner un objet sans le mot de passe
+    const { password: _, ...userWithoutPassword } = newUser.toJSON();
+
+    return { user: userWithoutPassword };
   }
 
 
@@ -76,8 +81,20 @@ export class AuthService {
     logger.info(`Login attempt for email: ${email}`);
 
     // Récupération du user avec mot de passe
-    const user = await UserModel.scope("withPassword").findOne({
+    const user: UserType | null = await UserModel.scope("withPassword").findOne({
       where: { email },
+      include: [
+        {
+          model: RoleModel,
+          as: "roles",
+          include: [
+            {
+              model: PermissionModel,
+              as: "permissions",
+            },
+          ],
+        },
+      ],
     });
 
     if (!user) {
@@ -107,7 +124,28 @@ export class AuthService {
       };
     }
 
-    const session = await SessionModel.create({ userId: user.id, userAgent });
+    // Vérifier si l'utilisateur a au moins un rôle
+    if (!user.roles || user.roles.length === 0) {
+      logger.warn(`[USER_WITHOUT_ROLES] USER ${user.email} (ID: ${user.id}) have beedn create but no role assign.`);
+      throw new BadRequestException(
+        "Aucun rôle configuré. Merci de contacter l'administrateur.",
+        ErrorCode.VERIFICATION_ERROR
+      );
+    }
+
+    let roleId: number | undefined = undefined;
+
+    // Si l'utilisateur a exactement un rôle, on l'assigne automatiquement
+    if (user.roles.length === 1) {
+      roleId = user.roles[0].id;
+    }
+    // Si plusieurs rôles, roleId reste null pour que l'utilisateur choisisse
+
+    const session = await SessionModel.create({
+      userId: user.id,
+      roleId, // Peut être null si multiple roles
+      userAgent
+    });
 
     const accessToken = signJwtToken({
       userId: user.id,
@@ -127,7 +165,7 @@ export class AuthService {
     };
   }
 
-  
+
   public async refreshToken(refreshToken: string) {
     const { payload } = verifyJwtToken<RefreshTPayload>(refreshToken, {
       secret: refreshTokenSignOptions.secret,

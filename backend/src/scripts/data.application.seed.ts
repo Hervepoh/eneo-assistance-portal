@@ -1,7 +1,9 @@
 import "dotenv/config";
 import { sequelize } from "../database/database";
-import { ApplicationModel as Application } from "../database/models/application.model";
-import { ApplicationGroupModel as ApplicationGroup } from "../database/models/applicationGroup.model";
+import {
+  ApplicationModel as Application,
+  ApplicationGroupModel as ApplicationGroup
+} from "../database/models";
 
 async function seed() {
   try {
@@ -10,7 +12,7 @@ async function seed() {
     console.log("Connection has been established successfully.");
 
     // Crée / met à jour les tables
-    await sequelize.sync({ alter: true }); 
+    await sequelize.sync({ alter: true });
 
     // 1️⃣ Créer les groupes d'applications
     const groupsData = [

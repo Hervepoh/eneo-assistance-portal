@@ -1,5 +1,4 @@
-import ApplicationGroupModel from "../../../database/models/applicationGroup.model";
-
+import { ApplicationGroupModel } from "../../../database/models";
 
 export class ApplicationGroupService {
   async create(data: { name: string }) {

@@ -1,6 +1,6 @@
 
 import { NotFoundException } from "../../common/utils/catch-errors";
-import DelegationModel from "../../database/models/delegation.model";
+import { DelegationModel } from "../../database/models";
 
 export class DelegationService {
   public async createDelegation(data: { name: string; regionId?: number }) {

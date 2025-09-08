@@ -1,6 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import { sequelize } from "../database";
-import UserModel from "./user.model";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { VerificationEnum } from "../../common/enums/verification-code.enum";
 import { generateUniqueCode } from "../../common/utils/uuid";
 
@@ -16,7 +14,7 @@ interface VerificationCodeAttributes {
 
 // Optionnel lors de la création : id, createdAt, updatedAt, code
 interface VerificationCodeCreationAttributes
-  extends Optional<VerificationCodeAttributes, "id" | "createdAt" | "updatedAt" | "code"> {}
+  extends Optional<VerificationCodeAttributes, "id" | "createdAt" | "updatedAt" | "code"> { }
 
 export class VerificationCodeModel extends Model<
   VerificationCodeAttributes,
@@ -30,47 +28,47 @@ export class VerificationCodeModel extends Model<
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  public static initialize(sequelize: Sequelize): void {
+    VerificationCodeModel.init(
+      {
+        id: {
+          type: DataTypes.INTEGER.UNSIGNED,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        userId: {
+          type: DataTypes.INTEGER.UNSIGNED,
+          allowNull: false,
+          references: {
+            model: "users",
+            key: "id",
+          },
+          onDelete: "CASCADE",
+          onUpdate: "CASCADE",
+        },
+        code: {
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true,
+          defaultValue: generateUniqueCode,
+        },
+        type: {
+          type: DataTypes.ENUM(...Object.values(VerificationEnum)),
+          allowNull: false,
+        },
+        expiresAt: {
+          type: DataTypes.DATE,
+          allowNull: false,
+        },
+      },
+      {
+        sequelize,
+        tableName: "verification_codes",
+        timestamps: true,
+        underscored: true,  // colonnes snake_case
+      }
+    );
+  }
 }
 
-VerificationCodeModel.init(
-  {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    userId: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
-      references: {
-        model: UserModel,
-        key: "id",
-      },
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-    },
-    code: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-      defaultValue: generateUniqueCode,
-    },
-    type: {
-      type: DataTypes.ENUM(...Object.values(VerificationEnum)),
-      allowNull: false,
-    },
-    expiresAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-  },
-  {
-    sequelize,
-    tableName: "verification_codes",
-    timestamps: true,
-  }
-);
-
-VerificationCodeModel.belongsTo(UserModel, { foreignKey: "userId", as: "user" });
-
-export default VerificationCodeModel;

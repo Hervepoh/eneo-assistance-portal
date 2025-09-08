@@ -1,5 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import { sequelize } from "../database";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 
 interface ApplicationGroupAttributes {
   id: number;
@@ -11,12 +10,11 @@ interface ApplicationGroupAttributes {
 }
 
 interface ApplicationGroupCreationAttributes
-  extends Optional<ApplicationGroupAttributes, "id" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> {}
+  extends Optional<ApplicationGroupAttributes, "id" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> { }
 
 export class ApplicationGroupModel
   extends Model<ApplicationGroupAttributes, ApplicationGroupCreationAttributes>
-  implements ApplicationGroupAttributes
-{
+  implements ApplicationGroupAttributes {
   public id!: number;
   public name!: string;
   public isDeleted!: boolean;
@@ -24,32 +22,36 @@ export class ApplicationGroupModel
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt!: Date | null;
+
+
+  public static initialize(sequelize: Sequelize): void {
+    ApplicationGroupModel.init(
+      {
+        id: {
+          type: DataTypes.INTEGER.UNSIGNED,
+          autoIncrement: true,
+          primaryKey: true,
+        },
+        name: {
+          type: DataTypes.STRING(100),
+          allowNull: false,
+        },
+        isDeleted: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false,
+          field: "is_deleted",
+        },
+      },
+      {
+        sequelize,
+        tableName: "application_groups",
+        timestamps: true,
+        paranoid: true, // soft delete
+        underscored: true,  // colonnes snake_case
+      }
+    );
+  }
 }
 
-ApplicationGroupModel.init(
-  {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    isDeleted: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: "is_deleted",
-    },
-  },
-  {
-    sequelize,
-    tableName: "application_groups",
-    timestamps: true,
-    paranoid: true, // ajoute deletedAt
-    underscored: true,
-  }
-);
 
-export default ApplicationGroupModel;
+

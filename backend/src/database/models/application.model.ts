@@ -1,6 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import { sequelize } from "../database";
-import ApplicationGroupModel from "./applicationGroup.model";
+import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 
 interface ApplicationAttributes {
   id: number;
@@ -13,12 +11,11 @@ interface ApplicationAttributes {
 }
 
 interface ApplicationCreationAttributes
-  extends Optional<ApplicationAttributes, "id"  | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> {}
+  extends Optional<ApplicationAttributes, "id" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt"> { }
 
 export class ApplicationModel
   extends Model<ApplicationAttributes, ApplicationCreationAttributes>
-  implements ApplicationAttributes
-{
+  implements ApplicationAttributes {
   public id!: number;
   public name!: string;
   public groupId!: number;
@@ -27,45 +24,43 @@ export class ApplicationModel
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
   public readonly deletedAt!: Date | null;
+
+  public static initialize(sequelize: Sequelize): void {
+  ApplicationModel.init(
+    {
+      id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      name: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+      },
+      groupId: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: true,
+        references: {
+          model: "application_groups",
+          key: "id",
+        },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
+      isDeleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+    },
+    {
+      sequelize,
+      tableName: "applications",
+      timestamps: true,
+      paranoid: true, // soft delete
+      underscored: true, // colonnes snake_case
+    }
+  );
+}
 }
 
-ApplicationModel.init(
-  {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    groupId: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      references: {
-        model: ApplicationGroupModel,
-        key: "id",
-      },
-      onDelete: "SET NULL",
-      onUpdate: "CASCADE",
-    },
-    isDeleted: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-  },
-  {
-    sequelize,
-    tableName: "applications",
-    timestamps: true,
-    paranoid: true, // soft delete
-    underscored: true, // colonnes snake_case
-  }
-);
 
-// Relations
-ApplicationModel.belongsTo(ApplicationGroupModel, { foreignKey: "groupId", as: "group" });
-ApplicationGroupModel.hasMany(ApplicationModel, { foreignKey: "groupId", as: "applications" });
-
-export default ApplicationModel;

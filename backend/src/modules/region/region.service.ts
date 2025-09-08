@@ -1,6 +1,7 @@
 
 import { NotFoundException } from "../../common/utils/catch-errors";
-import RegionModel from "../../database/models/region.model";
+import { RegionModel } from "../../database/models";
+
 
 export class RegionService {
   public async createRegion(name: string) {
@@ -31,6 +32,5 @@ export class RegionService {
     const region = await this.getRegionById(id);
     region.isDeleted = true;
     await region.save();
-    return;
   }
 }

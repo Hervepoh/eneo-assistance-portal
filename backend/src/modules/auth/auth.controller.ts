@@ -7,6 +7,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  switchRoleSchema,
   verificationEmailSchema,
 } from "../../common/validators/auth.validator";
 import {
@@ -16,9 +17,13 @@ import {
   setAuthenticationCookies,
 } from "../../common/utils/cookie";
 import {
+  BadRequestException,
   NotFoundException,
   UnauthorizedException,
 } from "../../common/utils/catch-errors";
+import { UserService } from "../user/user.service";
+import { ErrorCode } from "../../common/enums/error-code.enum";
+import { sessionService } from "../session/session.module";
 
 export class AuthController {
   private readonly authService: AuthService;
@@ -60,6 +65,67 @@ export class AuthController {
         user,
       });
   });
+
+
+  public switchRole = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedException(
+        "Merci de vous reconnectez",
+        ErrorCode.ACCESS_UNAUTHORIZED
+      );
+    }
+    const { roleId } = switchRoleSchema.parse(req.body)
+
+    const userId = req.user.id;
+
+    // Vérifier que le rôle appartient bien à l'utilisateur
+    const userService = new UserService();
+    const user = await userService.getUserRolesWithPermissions(userId);
+      
+    if (!user) {
+      throw new BadRequestException(
+        "Ce rôle ne vous est pas attribué",
+        ErrorCode.ACCESS_FORBIDDEN
+      );
+    }
+    const selectedRole = user?.roles?.find(role => role.id === Number(roleId));
+
+    if (!selectedRole) {
+      throw new BadRequestException(
+        "Ce rôle ne vous est pas attribué",
+        ErrorCode.ACCESS_FORBIDDEN
+      );
+    }
+
+    // Mettre à jour la session avec le rôle actif
+    req.user.activeRole = selectedRole;
+    req.user.activePermissions = selectedRole.permissions;
+
+    // Stocker le rôle actif dans la session ou la base  
+    await this.updateUserActiveRole(userId, roleId, Number(req.sessionId));
+
+    return res.json({
+      message: "Rôle sélectionné avec succès",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        activeRole: selectedRole,
+        activePermissions: selectedRole.permissions
+      }
+    });
+  })
+
+  public getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedException("User not found in request");
+    }
+    return res.status(HTTPSTATUS.OK).json({
+      message: "Current user fetched successfully",
+      data: req.user,
+    });
+  });
+
 
   public refreshToken = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken as string | undefined;
@@ -113,16 +179,23 @@ export class AuthController {
     });
   });
 
+
   public logout = asyncHandler(async (req: Request, res: Response) => {
-    const sessionId = req.cookies.sessionId as number | undefined;
+    const sessionId = req.sessionId;
     if (!sessionId) {
       throw new NotFoundException("Session is invalid.");
     }
 
-    await this.authService.logout(sessionId);
+    await this.authService.logout(Number(sessionId));
 
     return clearAuthenticationCookies(res).status(HTTPSTATUS.OK).json({
       message: "User logout successfully",
     });
   });
+
+
+  private async updateUserActiveRole(userId: number, roleId: number, sessionId: number) {
+    // README Implémentez selon votre système de session (DB, Redis, etc.)
+    await sessionService.updateSessionRole(sessionId,roleId)
+  }
 }

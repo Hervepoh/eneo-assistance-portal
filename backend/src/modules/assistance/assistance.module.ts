@@ -1,7 +1,7 @@
-import { RegionService } from "./assistance.service";
-import { RegionController } from "./region.controller";
+import { AssistanceService } from "./assistance.service";
+import { AssistanceController } from "./assistance.controller";
 
-const regionService = new RegionService();
-const regionController = new RegionController(regionService);
+const assistanceService = new AssistanceService();
+const assistanceController = new AssistanceController();
 
-export { regionService, regionController };
+export { assistanceService, assistanceController };
