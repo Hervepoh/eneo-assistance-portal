@@ -1,7 +1,6 @@
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Loader } from "lucide-react";
-import { LogIn } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { LogIn , ArrowRight, Loader } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -132,7 +131,6 @@ export default function Login() {
                 aria-hidden="true"
                 className="h-px w-full bg-[#eee] dark:bg-[#d6ebfd30]"
                 data-orientation="horizontal"
-                role="separator"
               />
               <span className="mx-4 text-xs dark:text-[#f1f7feb5] font-normal">
                 Assistance
@@ -141,13 +139,12 @@ export default function Login() {
                 aria-hidden="true"
                 className="h-px w-full bg-[#eee] dark:bg-[#d6ebfd30]"
                 data-orientation="horizontal"
-                role="separator"
               />
             </div>
 
             <div className="mt-8 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-medium text-gray-900 mb-2">Information :</h3>
-              <p className="text-gray-600 mb-2">Pour vous connecter veuillez utiliser votre compte Active directory.Example</p>
+              <p className="text-sm text-gray-600 mb-2">Pour vous connecter veuillez utiliser votre compte Active directory.Example</p>
               <div className="text-sm text-gray-600 space-y-1">
                 <p><strong>Utilisateur:</strong> herve.ngando@camlight.cm</p>
                 <p className="mt-2"><strong>Mot de passe:</strong> Votre mot de passe Outlook</p>

@@ -72,3 +72,11 @@ export const sessionsQueryFn = async () => {
 
 export const sessionDelMutationFn = async (id: string) =>
   await API.delete(`/session/${id}`);
+
+
+export const createAssistanceMutationFn = async (data: any) =>
+  await API.post(`/assistance`, data);
+
+
+export const getOrgReferenceQueryFn = async () => await API.get(`/references/organizations`);
+export const getAppReferenceQueryFn = async () => await API.get(`/references/applications`);

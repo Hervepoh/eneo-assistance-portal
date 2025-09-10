@@ -7,6 +7,7 @@ import ResetPassword from "./pages/auth/reset-password";
 import VerifyMfa from "./pages/auth/verify-mfa";
 import Home from "./pages/home";
 import Session from "./pages/sessions";
+import Request from "./pages/requests";
 import AppLayout from "./layout/AppLayout";
 import BaseLayout from "./layout/BaseLayout";
 import AuthRoute from "./routes/auth.route";
@@ -31,6 +32,7 @@ function App() {
         <Route element={<AuthRoute />}>
           <Route element={<AppLayout />}>
             <Route path="home" element={<Home />} />
+            <Route path="requests" element={<Request />} />
             <Route path="sessions" element={<Session />} />
           </Route>
         </Route>

@@ -11,6 +11,7 @@ import assistanceRoutes from "../modules/assistance/assistance.routes";
 import userRoutes from "../modules/user/user.routes";
 import roleRoutes from "../modules/role/role.routes";
 import permissionRoutes from "../modules/permission/permission.routes";
+import referenceRoutes from "../modules/references/reference.routes";
 
 const apiV1 = Router();
 
@@ -25,5 +26,6 @@ apiV1.use("/assistance", assistanceRoutes);
 apiV1.use("/user", userRoutes);
 apiV1.use("/role", roleRoutes);
 apiV1.use("/permission", permissionRoutes);
+apiV1.use("/references", referenceRoutes);
 
 export { apiV1 };

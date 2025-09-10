@@ -8,6 +8,7 @@ interface AssistanceRequestAttributes {
   agenceId: number;
   userId: number;
   superiorUserId?: number;
+  titre: string;
   description: string;
   comment?: string;
   status: AssistanceStatusEnum;
@@ -31,6 +32,7 @@ export class AssistanceRequestModel extends Model<
   public agenceId!: number;
   public userId!: number;
   public superiorUserId?: number;
+  public titre!: string;
   public description!: string;
   public comment?: string;
   public status!: AssistanceStatusEnum;
@@ -50,6 +52,7 @@ export class AssistanceRequestModel extends Model<
         agenceId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         userId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         superiorUserId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+        titre: { type: DataTypes.STRING, allowNull: false },
         description: { type: DataTypes.TEXT, allowNull: false },
         comment: { type: DataTypes.TEXT, allowNull: true },
         status: { type: DataTypes.ENUM(...Object.values(AssistanceStatusEnum)), defaultValue: AssistanceStatusEnum.DRAFT },

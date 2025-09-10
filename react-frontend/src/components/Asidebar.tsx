@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   EllipsisIcon,
+  FileText,
   Home,
   Loader,
   Lock,
   LogOut,
   MoonStarIcon,
+  Plus,
   Settings,
   SunIcon,
   User,
@@ -52,6 +54,16 @@ const Asidebar = () => {
       icon: Home,
     },
     {
+      title: "Nouvelle demande",
+      url: "/requests",
+      icon: Plus,
+    },
+    {
+      title: "Mes demandes",
+      url: "/my-requests",
+      icon: FileText,
+    },
+    {
       title: "Sessions",
       url: "/sessions",
       icon: Lock,
@@ -79,7 +91,7 @@ const Asidebar = () => {
                 to="/home"
                 className="hidden md:flex ml-2 text-xl tracking-[-0.16px] text-black dark:text-[#fcfdffef] font-bold mb-0"
               >
-                Squeezy
+                AssistanceApp
               </Link>
             )}
           </div>
@@ -88,16 +100,29 @@ const Asidebar = () => {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {items.map((item) => (
+                {items.map((item) => {
+                   const isActive = "/home" === item.url;
+                  return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <a href={item.url} className="!text-[15px]">
-                        <item.icon />
+                      {/* <a href={item.url} className="!text-[15px]">
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.title}</span>
+                      </a> */}
+                      <a
+                        key={item.url}
+                        href={item.url}
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${isActive
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          }`}
+                      >
+                        <item.icon className="w-5 h-5" />
                         <span>{item.title}</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
+                )})}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
