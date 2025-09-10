@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader } from "lucide-react";
+import { LogIn } from 'lucide-react';
 import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -65,18 +66,16 @@ export default function Login() {
   return (
     <main className="w-full min-h-[590px] h-auto max-w-full pt-10">
       <div className="w-full h-full p-5 rounded-md">
-        <Logo />
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Logo /><LogIn className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-2xl tracking-[-0.16px] dark:text-[#fcfdffef] font-bold mb-1.5 mt-8 text-center">
+            Demandes d'Assistance
+          </h1>
+          <p className="text-gray-600 mt-2">Connectez-vous à votre compte</p>
+        </div>
 
-        <h1 className="text-xl tracking-[-0.16px] dark:text-[#fcfdffef] font-bold mb-1.5 mt-8 text-center sm:text-left">
-          Log in to Squeezy
-        </h1>
-        <p className="mb-8 text-center sm:text-left text-base dark:text-[#f1f7feb5] font-normal">
-          Don't have an account?{" "}
-          <Link className="text-primary" to="/signup">
-            Sign up
-          </Link>
-          .
-        </p>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="mb-4">
@@ -117,57 +116,46 @@ export default function Login() {
                 )}
               />
             </div>
-            <div className="mb-4 flex w-full items-center justify-end">
-              <Link
-                className="text-sm dark:text-white"
-                to={`/forgot-password?email=${form.getValues().email}`}
-              >
-                Forgot your password?
-              </Link>
-            </div>
+
             <Button
               disabled={isPending}
               className="w-full text-[15px] h-[40px] text-white font-semibold"
               type="submit"
             >
               {isPending && <Loader className="animate-spin" />}
-              Sign in
+              Se connecter
               <ArrowRight />
             </Button>
 
             <div className="mb-6 mt-6 flex items-center justify-center">
-              <div
+              <hr
                 aria-hidden="true"
                 className="h-px w-full bg-[#eee] dark:bg-[#d6ebfd30]"
                 data-orientation="horizontal"
                 role="separator"
-              ></div>
+              />
               <span className="mx-4 text-xs dark:text-[#f1f7feb5] font-normal">
-                OR
+                Assistance
               </span>
-              <div
+              <hr
                 aria-hidden="true"
                 className="h-px w-full bg-[#eee] dark:bg-[#d6ebfd30]"
                 data-orientation="horizontal"
                 role="separator"
-              ></div>
+              />
+            </div>
+
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-medium text-gray-900 mb-2">Information :</h3>
+              <p className="text-gray-600 mb-2">Pour vous connecter veuillez utiliser votre compte Active directory.Example</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p><strong>Utilisateur:</strong> herve.ngando@camlight.cm</p>
+                <p className="mt-2"><strong>Mot de passe:</strong> Votre mot de passe Outlook</p>
+              </div>
             </div>
           </form>
         </Form>
-        <Button variant="outline" type="button" className="w-full h-[40px]">
-          Email magic link
-        </Button>
-        <p className="text-xs dark:text-slate- font-normal mt-7">
-          By signing in, you agree to our{" "}
-          <a className="text-primary hover:underline" href="#">
-            Terms of Service
-          </a>{" "}
-          and{" "}
-          <a className="text-primary hover:underline" href="#">
-            Privacy Policy
-          </a>
-          .
-        </p>
+
       </div>
     </main>
   );
