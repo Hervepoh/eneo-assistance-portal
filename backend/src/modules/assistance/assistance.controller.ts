@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { AssistanceService, assistanceService } from "./assistance.service";
 import { HTTPSTATUS } from "../../config/http.config";
-import { AssistanceStatusEnum } from "../../common/enums/assistance-status.enum";
 import { CreateAssistanceDto, createAssistanceSchema } from "./assistance.schemas";
 import { asyncHandler } from "../../middlewares/asyncHandler";
 import { AssistanceFilters } from "../../common/interface/assistance.interface";
+import { getComments } from "./assistance.helpers";
 
 export class AssistanceController {
   private readonly service: AssistanceService;
@@ -17,21 +17,24 @@ export class AssistanceController {
     const userId = (req.user as any)?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
+    const files = req.files as Express.Multer.File[];
+    const comments = getComments(req.body.comments);
+
     // Préparer les données pour la validation
     const requestData = {
       ...req.body,
       userId: parseInt(userId),
       superiorUserId: parseInt(userId),
-      files: req.files || [],
-      comments: Array.isArray(req.body.comments)
-        ? req.body.comments
-        : req.body.comments ? JSON.parse(req.body.comments) : []
+      files,
+      comments
     };
 
     // Valider les données avec Zod
     const validatedData: CreateAssistanceDto = createAssistanceSchema.parse(requestData);
 
+    // Execute service to create 
     const created = await assistanceService.create(validatedData);
+
     return res.status(HTTPSTATUS.CREATED).json({
       success: true,
       message: 'Demande créée avec succès',
@@ -99,8 +102,8 @@ export class AssistanceController {
     const id = Number(req.params.id);
 
     try {
-      // const updated = await assistanceService.update(id, req.body, userId);
-      // return res.status(HTTPSTATUS.OK).json({ request: updated });
+      const updated = await assistanceService.update(id, req.body, userId);
+      return res.status(HTTPSTATUS.OK).json({ request: updated });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }

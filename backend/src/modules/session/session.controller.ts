@@ -15,12 +15,8 @@ export class SessionController {
   // Liste toutes les sessions
   public getAllSession = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id;
-    console.log("getAllSession req.user",req.user)
     if (!userId) throw new NotFoundException("User not found in request");
-
-    console.log("userId", userId);
-    console.log("req.sessionId", req.sessionId);
-
+    
     const { sessions } = await this.sessionService.getAllSession(userId);
 
     const modifySessions = sessions.map((session) => ({

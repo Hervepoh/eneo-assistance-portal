@@ -1,34 +1,104 @@
 export type ModeType = 'my' | 'as-n1' | 'all'
-
-export interface AssistanceFile {
-  file: File;
-  commentaire: string;
-}
+export type ID = string | number;
+export type PrioriteType = "basse" | "normale" | "haute" | "critique"
 
 
-export interface User {
-  id: number;
+export type loginType = { email: string; password: string };
+
+export type registerType = {
   name: string;
   email: string;
-  role?: 'utilisateur' | 'verificateur' | 'dec' | 'bao' | 'technicien' | 'administrateur';
-  departement?: string;
-  telephone?: string;
-  poste?: string;
-  dateCreation?: Date;
-  actif?: boolean;
-  avatar?: string;
+  password: string;
+  confirmPassword: string;
+};
+
+export type verifyEmailType = { code: string };
+export type forgotPasswordType = { email: string };
+export type resetPasswordType = { password: string; verificationCode: string };
+export type verifyMFAType = { code: string; secretKey: string };
+export type mfaLoginType = { code: string; email: string };
+export type SessionType = {
+  _id: string;
+  userId: string;
+  userAgent: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+};
+
+export type SessionResponseType = {
+  message: string;
+  sessions: SessionType[];
+};
+
+export type mfaType = {
+  message: string;
+  secret: string;
+  qrImageUrl: string;
+};
+
+
+
+
+// Types pour la structures organisationnelles (Agence -> Délégation -> région)
+export interface Agence {
+  id: ID;
+  name: string;
 }
 
-export interface Fichier {
-  id: number;
-  nom: string;
-  url: string;
-  type: string;
-  taille: number;
+export interface Delegation {
+  id: ID;
+  name: string;
+  agences: Agence[];
 }
+
+export interface Region {
+  id: ID;
+  name: string;
+  delegations: Delegation[];
+}
+
+// Types pour les groupes d'applications & applications
+export interface Application {
+  id: ID;
+  name: string;
+}
+
+export interface ApplicationGroup {
+  id: ID;
+  name: string;
+  applications: Application[];
+}
+
+// Types pour Les demandes d'assistance
+export interface AssistanceFile {
+  fieldname: File;
+  originalname: string;
+  encoding: string,
+  mimetype: string,
+  destination: string,
+  filename: string,
+  path: string,
+  size: number,
+}
+
+export type AssistanceRequestPayload = {
+  titre: string;
+  description: string;
+  regionId: ID;
+  delegationId: ID;
+  agenceId: ID;
+  applicationGroupId: ID;
+  applicationId: ID;
+  priorite: PrioriteType;
+  files?: AssistanceFile[];
+  comments?: string[]
+  status: "draft" | "submitted"; // Pour gérer le brouillon
+}
+
 
 export interface Demande {
-  id: number;
+  id: ID;
   reference: string;
   titre: string;
   description: string;
@@ -58,6 +128,29 @@ export interface Demande {
   historique?: ActionHistorique[];
   workflow?: WorkflowStep[];
 }
+
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role?: 'utilisateur' | 'verificateur' | 'dec' | 'bao' | 'technicien' | 'administrateur';
+  departement?: string;
+  telephone?: string;
+  poste?: string;
+  dateCreation?: Date;
+  actif?: boolean;
+  avatar?: string;
+}
+
+export interface Fichier {
+  id: number;
+  nom: string;
+  url: string;
+  type: string;
+  taille: number;
+}
+
 
 export interface WorkflowStep {
   id: string;

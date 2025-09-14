@@ -20,35 +20,7 @@ import { createAssistanceMutationFn, getAppReferenceQueryFn, getOrgReferenceQuer
 import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { AxiosError } from "axios";
-
-interface Agence {
-  id: number;
-  name: string;
-}
-
-interface Delegation {
-  id: number;
-  name: string;
-  agences: Agence[];
-}
-
-interface Region {
-  id: number;
-  name: string;
-  delegations: Delegation[];
-}
-
-// Types pour les groupes d'applications
-export interface Application {
-  id: number;
-  name: string;
-}
-
-export interface ApplicationGroup {
-  id: number;
-  name: string;
-  applications: Application[];
-}
+import { Agence, Application, ApplicationGroup, Delegation, Region } from "@/types";
 
 
 // ✅ Schéma de validation avec fichiers multiples
@@ -93,7 +65,6 @@ export function NouvelleDemande() {
     staleTime: Infinity,
   });
 
-
   // ⚡ Mutation pour créer la demande
   const { mutate, isPending } = useMutation({
     mutationFn: createAssistanceMutationFn,
@@ -122,7 +93,6 @@ export function NouvelleDemande() {
   });
 
   // Calcul des valeurs dérivées pour le filtrage hiérarchique
-
   const selectedRegion = regions?.find(
     (r: { id: { toString: () => string; }; }) => r.id.toString() === form.watch("region")
   );
@@ -139,7 +109,6 @@ export function NouvelleDemande() {
   const applications = selectedApplicationGroup?.applications || [];
 
 
-
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
@@ -152,13 +121,12 @@ export function NouvelleDemande() {
     formData.append("applicationGroup", values.applicationGroup);
     formData.append("application", values.application);
     formData.append("priorite", values.priorite);
-
-    formData.append("status", values.status); // 👈 envoie du statut
+    formData.append("status", values.status); 
 
     // Fichiers joints
-    values.fichiers?.forEach((f, index) => {
-      formData.append(`files[${index}]`, f.file);
-      formData.append(`comments[${index}]`, f.commentaire);
+    values.fichiers?.forEach(f => {
+      formData.append("files", f.file);          
+      formData.append("comments", f.commentaire); 
     });
 
     mutate(formData, {
@@ -423,7 +391,6 @@ export function NouvelleDemande() {
                       input.onchange = (e: Event) => {
                         const target = e.target as HTMLInputElement;
                         const file = target.files?.[0];
-                        // const file = e.target.files[0];
                         if (file) {
                           append({ file, commentaire: "" });
                         }
