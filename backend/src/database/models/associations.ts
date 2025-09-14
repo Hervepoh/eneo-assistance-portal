@@ -182,28 +182,39 @@ export function setupAssociations(): void {
     as: "permission"
   });
 
-  // 11. Relations avec AssistanceRequest (demandeur, délégué, etc.)
-  AssistanceRequestModel.belongsTo(UserModel, {
-    foreignKey: "requesterId",
-    as: "requester",
+  // 11. Relations avec AssistanceRequest (demandeur,supérieur hierachique, etc.)
+  // Relation: User (créateur) 1 -> N AssistanceRequest
+  UserModel.hasMany(AssistanceRequestModel, {
+    foreignKey: "user_id", // Corrigé pour correspondre à votre base de données
+    as: "requests",
     onDelete: "SET NULL",
     onUpdate: "CASCADE"
   });
 
   AssistanceRequestModel.belongsTo(UserModel, {
-    foreignKey: "delegueId",
-    as: "delegue",
+    foreignKey: "user_id", // Corrigé pour correspondre à votre base de données
+    as: "requestor", // Alias cohérent
+    onDelete: "SET NULL",
+    onUpdate: "CASCADE"
+  });
+
+
+  // Relation: User (supérieur) 1 -> N AssistanceRequest
+  UserModel.hasMany(AssistanceRequestModel, {
+    foreignKey: "superior_user_id",
+    as: "supervisor",
     onDelete: "SET NULL",
     onUpdate: "CASCADE"
   });
 
   AssistanceRequestModel.belongsTo(UserModel, {
-    foreignKey: "businessId",
-    as: "business",
+    foreignKey: "superior_user_id",
+    as: "superiorUser",
     onDelete: "SET NULL",
     onUpdate: "CASCADE"
   });
 
+  // Relations supplémentaires si nécessaire
   AssistanceRequestModel.belongsTo(AgenceModel, {
     foreignKey: "agenceId",
     as: "agence",
@@ -238,7 +249,7 @@ export function setupAssociations(): void {
 
 export function verifyAssociations(): void {
   console.log("Vérification des associations...");
-  
+
   // Vérification des associations principales
   const modelsWithAssociations = [
     ApplicationGroupModel, ApplicationModel,
@@ -247,10 +258,10 @@ export function verifyAssociations(): void {
     UserModel, RoleModel, PermissionModel,
     SessionModel, VerificationCodeModel
   ];
-  
+
   modelsWithAssociations.forEach(model => {
     console.log(`${model.name} associations:`, model.associations !== undefined);
   });
-  
+
   console.log("Toutes les associations ont été configurées.");
 }

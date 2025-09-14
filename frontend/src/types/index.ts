@@ -1,42 +1,62 @@
+export type ModeType = 'my' | 'as-n1' | 'all'
+
+export interface AssistanceFile {
+  file: File;
+  commentaire: string;
+}
+
+
 export interface User {
-  id: string;
-  nom: string;
-  prenom: string;
+  id: number;
+  name: string;
   email: string;
-  role: 'utilisateur' | 'verificateur' | 'dec' | 'bao' | 'technicien' | 'administrateur';
-  departement: string;
+  role?: 'utilisateur' | 'verificateur' | 'dec' | 'bao' | 'technicien' | 'administrateur';
+  departement?: string;
   telephone?: string;
   poste?: string;
-  dateCreation: Date;
-  actif: boolean;
+  dateCreation?: Date;
+  actif?: boolean;
   avatar?: string;
 }
 
+export interface Fichier {
+  id: number;
+  nom: string;
+  url: string;
+  type: string;
+  taille: number;
+}
+
 export interface Demande {
-  id: string;
+  id: number;
+  reference: string;
   titre: string;
   description: string;
+  region: string;
+  delegation: string;
+  agence: string;
+  application: string;
   categorie: 'technique' | 'administrative' | 'financiere' | 'rh' | 'autre';
   priorite: 'basse' | 'normale' | 'haute' | 'critique';
   statut: 'brouillon' | 'soumise' | 'verification' | 'validation_dec' | 'validation_bao' | 'approuvee' | 'assignee' | 'en_cours' | 'resolue' | 'fermee' | 'rejetee';
-  demandeur: User;
+  requestor: User;
   verificateur?: User;
   dec?: User;
   bao?: User;
   technicien?: User;
   assignePar?: User;
-  dateCreation: Date;
-  dateModification: Date;
+  createdAt: string;
+  dateModification: string;
   dateEcheance?: Date;
   dateVerification?: Date;
   dateValidationDec?: Date;
   dateValidationBao?: Date;
   dateAssignation?: Date;
   dateResolution?: Date;
-  fichiers: string[];
-  commentaires: Commentaire[];
-  historique: ActionHistorique[];
-  workflow: WorkflowStep[];
+  fichiers: Fichier[];
+  commentaires?: Commentaire[];
+  historique?: ActionHistorique[];
+  workflow?: WorkflowStep[];
 }
 
 export interface WorkflowStep {
@@ -102,4 +122,10 @@ export interface Notification {
   lue: boolean;
   dateCreation: Date;
   demandeId?: string;
+}
+
+export interface Utilisateur {
+  id: number;
+  nom: string;
+  email: string;
 }

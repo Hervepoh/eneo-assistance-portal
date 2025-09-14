@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle, Clock, XCircle, User, Calendar } from 'lucide-react';
 import { WorkflowStep } from '../../types';
 

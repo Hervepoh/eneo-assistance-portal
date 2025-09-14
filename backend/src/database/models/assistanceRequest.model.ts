@@ -1,8 +1,10 @@
 import { DataTypes, Model, Optional, Sequelize } from "sequelize";
 import { AssistanceStatusEnum } from "../../common/enums/assistance-status.enum";
+import { ReferenceGeneratorService } from "../../modules/assistance/referenceGenerator.service";
 
 interface AssistanceRequestAttributes {
   id: number;
+  reference: string;
   regionId: number;
   delegationId: number;
   agenceId: number;
@@ -20,13 +22,14 @@ interface AssistanceRequestAttributes {
 }
 
 interface AssistanceRequestCreationAttributes
-  extends Optional<AssistanceRequestAttributes, "id" | "comment" | "status" | "createdAt" | "updatedAt" | "deletedAt"> { }
+  extends Optional<AssistanceRequestAttributes, "id" | "reference" | "comment" | "status" | "createdAt" | "updatedAt" | "deletedAt"> { }
 
 export class AssistanceRequestModel extends Model<
   AssistanceRequestAttributes,
   AssistanceRequestCreationAttributes
 > implements AssistanceRequestAttributes {
   public id!: number;
+  public reference!: string;
   public regionId!: number;
   public delegationId!: number;
   public agenceId!: number;
@@ -47,6 +50,7 @@ export class AssistanceRequestModel extends Model<
     AssistanceRequestModel.init(
       {
         id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+        reference: { type: DataTypes.STRING, allowNull: false },
         regionId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
         delegationId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
         agenceId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
@@ -65,6 +69,20 @@ export class AssistanceRequestModel extends Model<
         timestamps: true,
         paranoid: true, // soft delete
         underscored: true,  // colonnes snake_case
+        hooks: {
+          beforeValidate: async (instance: AssistanceRequestModel) => {
+            // Générer la référence seulement si elle n'existe pas
+            if (!instance.reference && instance.applicationId) {
+              try {
+                instance.reference = await ReferenceGeneratorService.generateUniqueReference(
+                  instance.applicationId
+                );
+              } catch (error:any) {
+                throw new Error(`Échec de génération de référence: ${error.message}`);
+              }
+            }
+          }
+        }
       }
     );
   }

@@ -1,8 +1,36 @@
 import React, { useState } from 'react';
 import { CheckCircle, XCircle, MessageSquare, User } from 'lucide-react';
-import { useDemandes } from '../../context/DemandesContext';
-import { useUtilisateurs } from '../../context/UtilisateursContext';
-import { useAuth } from '../../context/AuthContext';
+
+export const useDemandes = () => {
+  return {
+    validerEtape: (id: string|number, etape: string, approuve: boolean, commentaire?: string) => {
+      console.log("Validation simulée:", { id, etape, approuve, commentaire });
+    },
+    assignerTechnicien: (id: string  | number, technicien: any) => {
+      console.log("Assignation simulée:", { id, technicien });
+    },
+    demarrerResolution: (id: string  | number) => {
+      console.log("Démarrage résolution simulé:", { id });
+    },
+    terminerResolution: (id: string | number, commentaire: string) => {
+      console.log("Résolution simulée:", { id, commentaire });
+    },
+  };
+};
+export const useUtilisateurs = () => {
+  return {
+    utilisateurs: [
+      { id: "u1", prenom: "Alice", nom: "Doe", role: "technicien", actif: true, poste: "IT Support" },
+      { id: "u2", prenom: "Bob", nom: "Smith", role: "technicien", actif: true, poste: "Helpdesk" },
+      { id: "u3", prenom: "Admin", nom: "Boss", role: "administrateur", actif: true, poste: "Manager" },
+    ],
+  };
+};
+export const useAuth = () => {
+  return {
+    user: { id: "u3", prenom: "Admin", nom: "Boss", role: "administrateur" },
+  };
+};
 import { Demande, User as UserType } from '../../types';
 
 interface ValidationActionsProps {
@@ -74,7 +102,7 @@ export function ValidationActions({ demande, etape, onClose }: ValidationActions
       case 'assignation':
         return user?.role === 'verificateur' || user?.role === 'administrateur';
       case 'resolution':
-        return user?.role === 'technicien' || user?.role === 'administrateur' || demande.technicien?.id === user?.id;
+        return user?.role === 'technicien' || user?.role === 'administrateur' || demande?.technicien?.id.toString() === user?.id.toString();
       default:
         return false;
     }

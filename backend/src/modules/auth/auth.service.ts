@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import {
   LoginDto,
   RegisterDto,
-  resetPasswordDto,
+  ResetPasswordDto,
 } from "../../common/interface/auth.interface";
 import { ErrorCode } from "../../common/enums/error-code.enum";
 import { VerificationEnum } from "../../common/enums/verification-code.enum";
@@ -288,7 +288,7 @@ export class AuthService {
   }
 
 
-  public async resePassword({ password, verificationCode }: resetPasswordDto) {
+  public async resePassword({ password, verificationCode }: ResetPasswordDto) {
     const validCode = await VerificationCodeModel.findOne({
       where: {
         code: verificationCode,

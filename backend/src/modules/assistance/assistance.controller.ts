@@ -4,41 +4,75 @@ import { HTTPSTATUS } from "../../config/http.config";
 import { AssistanceStatusEnum } from "../../common/enums/assistance-status.enum";
 import { CreateAssistanceDto, createAssistanceSchema } from "./assistance.schemas";
 import { asyncHandler } from "../../middlewares/asyncHandler";
+import { AssistanceFilters } from "../../common/interface/assistance.interface";
 
 export class AssistanceController {
   private readonly service: AssistanceService;
-      constructor(service: AssistanceService) {
-          this.service = service;
-      }
 
-  public create =  asyncHandler(async (req: Request, res: Response) => {
+  constructor(service: AssistanceService) {
+    this.service = service;
+  }
+
+  public create = asyncHandler(async (req: Request, res: Response) => {
     const userId = (req.user as any)?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    try {
-      // Préparer les données pour la validation
-      const requestData = {
-        ...req.body,
-        userId: parseInt(userId),
-        files: req.files || [],
-        comments: Array.isArray(req.body.comments)
-          ? req.body.comments
-          : req.body.comments ? JSON.parse(req.body.comments) : []
-      };
+    // Préparer les données pour la validation
+    const requestData = {
+      ...req.body,
+      userId: parseInt(userId),
+      superiorUserId: parseInt(userId),
+      files: req.files || [],
+      comments: Array.isArray(req.body.comments)
+        ? req.body.comments
+        : req.body.comments ? JSON.parse(req.body.comments) : []
+    };
 
-      // Valider les données avec Zod
-      const validatedData: CreateAssistanceDto = createAssistanceSchema.parse(requestData);
+    // Valider les données avec Zod
+    const validatedData: CreateAssistanceDto = createAssistanceSchema.parse(requestData);
 
-      //const created = await assistanceService.create(validatedData);
-      return res.status(HTTPSTATUS.CREATED).json({
-        success: true,
-        message: 'Demande créée avec succès',
-       // data: created
-      });
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
-    }
+    const created = await assistanceService.create(validatedData);
+    return res.status(HTTPSTATUS.CREATED).json({
+      success: true,
+      message: 'Demande créée avec succès',
+      data: created
+    });
+
   })
+
+
+  public getMy = asyncHandler(async (req: Request, res: Response) =>
+    this.handleFindRequests(req, res, 'my')
+  )
+
+  public getAsN1 = asyncHandler(async (req: Request, res: Response) =>
+    this.handleFindRequests(req, res, 'as-n1')
+  )
+
+  public getAll = asyncHandler(async (req: Request, res: Response) =>
+    this.handleFindRequests(req, res, 'all')
+  )
+
+  public getById = asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const request = await assistanceService.findById(id);
+    if (!request) return res.status(404).json({ message: "Not found" });
+    return res.status(HTTPSTATUS.OK).json({ request });
+  })
+
+  public getByReference = asyncHandler(async (req: Request, res: Response) => {
+    const { reference } = req.params;
+    if (!reference) {
+      return res.status(HTTPSTATUS.BAD_REQUEST).json({
+        success: false,
+        message: "La référence est requise"
+      });
+    }
+    const request = await assistanceService.findByReference(reference);
+    if (!request) return res.status(HTTPSTATUS.NOT_FOUND).json({ message: "Not found" });
+    return res.status(HTTPSTATUS.OK).json({ request });
+  });
+
 
   async addFiles(req: Request, res: Response) {
     const userId = (req.user as any)?.id;
@@ -58,38 +92,6 @@ export class AssistanceController {
     }
   }
 
-  async myRequests(req: Request, res: Response) {
-    const userId = (req.user as any)?.id;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-    const filters = {
-      status: req.query.status as string | undefined,
-      regionId: req.query.regionId ? Number(req.query.regionId) : undefined,
-      delegationId: req.query.delegationId ? Number(req.query.delegationId) : undefined,
-      agenceId: req.query.agenceId ? Number(req.query.agenceId) : undefined,
-      applicationGroupId: req.query.applicationGroupId ? Number(req.query.applicationGroupId) : undefined,
-      applicationId: req.query.applicationId ? Number(req.query.applicationId) : undefined,
-      page: req.query.page ? Number(req.query.page) : 1,
-      limit: req.query.limit ? Number(req.query.limit) : 10,
-      q: typeof req.query.q === "string" ? req.query.q : undefined,
-    };
-
-    const result = await assistanceService.findByUser(userId, filters);
-    return res.status(HTTPSTATUS.OK).json(result);
-  }
-
-  async getAll(req: Request, res: Response) {
-    const { status } = req.query;
-    const requests = await assistanceService.findAll(status as any);
-    return res.json({ requests });
-  }
-
-  async getById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    const request = await assistanceService.findById(id);
-    if (!request) return res.status(404).json({ message: "Not found" });
-    return res.status(HTTPSTATUS.OK).json({ request });
-  }
 
   async update(req: Request, res: Response) {
     const userId = (req.user as any)?.id;
@@ -97,8 +99,8 @@ export class AssistanceController {
     const id = Number(req.params.id);
 
     try {
-      const updated = await assistanceService.update(id, req.body, userId);
-      return res.status(HTTPSTATUS.OK).json({ request: updated });
+      // const updated = await assistanceService.update(id, req.body, userId);
+      // return res.status(HTTPSTATUS.OK).json({ request: updated });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
@@ -112,10 +114,10 @@ export class AssistanceController {
 
     try {
       // change status to UNDER_VERIFICATION / SUBMITTED
-      const reqModel = await assistanceService.update(id, { status: AssistanceStatusEnum.SUBMITTED }, userId);
+      // const reqModel = await assistanceService.update(id, { status: AssistanceStatusEnum.SUBMITTED }, userId);
       await assistanceService.performAction(id, { type: "SEND_TO_DELEGUE", actorId: userId }); // or simply log - example
       // note: actual routing to verifier is handled by performAction calls from verifier later
-      return res.status(HTTPSTATUS.OK).json({ request: reqModel });
+      // return res.status(HTTPSTATUS.OK).json({ request: reqModel });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
@@ -148,4 +150,82 @@ export class AssistanceController {
       return res.status(400).json({ error: err.message });
     }
   }
+
+
+  /**
+   * Méthode générique pour toutes les routes de listing
+   */
+  private async handleFindRequests(
+    req: Request,
+    res: Response,
+    mode: 'my' | 'as-n1' | 'all'
+  ) {
+    try {
+      const userId = (req.user as any)?.id;
+
+      if (!userId && mode !== 'all') {
+        return res.status(HTTPSTATUS.UNAUTHORIZED).json({
+          success: false,
+          message: "Utilisateur non authentifié"
+        });
+      }
+
+      // Vérification des permissions pour le mode 'all'
+      if (mode === 'all') {
+        const userRoles = (req.user as any)?.roles || [];
+        if (!userRoles.includes('admin')) {
+          return res.status(HTTPSTATUS.FORBIDDEN).json({
+            success: false,
+            message: "Accès réservé aux administrateurs"
+          });
+        }
+      }
+
+      const filters: AssistanceFilters = this.buildFiltersFromQuery(req.query);
+
+      const result = await this.service.findRequests(mode, userId, filters);
+
+      return res.status(HTTPSTATUS.OK).json({
+        success: true,
+        data: result.data,
+        pagination: {
+          total: result.total,
+          page: result.page,
+          limit: result.limit,
+          totalPages: result.totalPages
+        }
+      });
+
+    } catch (error) {
+      console.error(`Erreur récupération demandes (mode: ${mode}):`, error);
+      return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Erreur interne du serveur"
+      });
+    }
+  }
+
+  /**
+   * Construction des filtres depuis les query parameters
+   */
+  private buildFiltersFromQuery(query: any): AssistanceFilters {
+    return {
+      q: query.q as string,
+      status: query.status as string,
+      regionId: query.regionId ? parseInt(query.regionId as string) : undefined,
+      delegationId: query.delegationId ? parseInt(query.delegationId as string) : undefined,
+      agenceId: query.agenceId ? parseInt(query.agenceId as string) : undefined,
+      applicationGroupId: query.applicationGroupId ? parseInt(query.applicationGroupId as string) : undefined,
+      applicationId: query.applicationId ? parseInt(query.applicationId as string) : undefined,
+      page: query.page ? Math.max(1, parseInt(query.page as string)) : 1,
+      limit: query.limit ? Math.min(100, Math.max(1, parseInt(query.limit as string))) : 10,
+    };
+  }
+
+
 }
+
+
+
+
+

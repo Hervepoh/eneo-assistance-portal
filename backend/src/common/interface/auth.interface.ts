@@ -12,7 +12,7 @@ export interface LoginDto {
   userAgent?: string;
 }
 
-export interface resetPasswordDto {
+export interface ResetPasswordDto {
   password: string;
   verificationCode: string;
 }

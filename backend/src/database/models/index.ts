@@ -17,6 +17,7 @@ import { SessionModel } from './session.model';
 import {UserRoleModel} from './userRole.model';
 import { UserModel } from './user.model';
 import { SessionUserRolesPermissionsViewModel } from './VuserRolesPermissions.view.model.';
+import { AssistanceRequestViewModel } from './assistanceRequest.view.model';
 
 
 // Initialiser tous les modèles dans l'ordre correct
@@ -43,7 +44,8 @@ RolePermissionModel.initialize(sequelize);
 UserRoleModel.initialize(sequelize);
 
 // 3- Vue Modèle 
-SessionUserRolesPermissionsViewModel.initialize(sequelize)
+SessionUserRolesPermissionsViewModel.initialize(sequelize);
+AssistanceRequestViewModel.initialize(sequelize);
 
 // Configurer les associations
 setupAssociations();
@@ -68,5 +70,6 @@ export {
     AssistanceRequestModel,
     AssistanceFileModel,
     AssistanceHistoryModel,
+    AssistanceRequestViewModel,
     SessionUserRolesPermissionsViewModel
 };
