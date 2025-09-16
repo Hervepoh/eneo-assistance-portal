@@ -1,10 +1,15 @@
 import "dotenv/config";
-import { sequelize } from "../database/database";
-import { AgenceModel as Agence } from "../database/models/agency.model";
-import { DelegationModel as Delegation } from "../database/models/delegation.model";
-import { RegionModel as Region } from "../database/models/region.model";
-import { ApplicationModel as Application } from "../database/models/application.model";
-import { ApplicationGroupModel as ApplicationGroup } from "../database/models/applicationGroup.model";
+import {
+  sequelize,
+  AgenceModel,
+  DelegationModel,
+  RegionModel ,
+  ApplicationGroupModel ,
+  ApplicationModel,
+  RoleModel,
+  PermissionModel,
+  RolePermissionModel,
+} from "../database/models";
 
 async function clearDatabase() {
   try {
@@ -14,11 +19,14 @@ async function clearDatabase() {
     await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
 
     // Vider avec truncate (réel, pas soft delete)
-    await Agence.truncate({ cascade: true, force: true });
-    await Delegation.truncate({ cascade: true, force: true });
-    await Region.truncate({ cascade: true, force: true });
-    await Application.truncate({ cascade: true, force: true });
-    await ApplicationGroup.truncate({ cascade: true, force: true });
+    await AgenceModel.truncate({ cascade: true, force: true });
+    await DelegationModel.truncate({ cascade: true, force: true });
+    await RegionModel.truncate({ cascade: true, force: true });
+    await ApplicationModel.truncate({ cascade: true, force: true });
+    await ApplicationGroupModel.truncate({ cascade: true, force: true });
+    await RolePermissionModel.truncate({ cascade: true, force: true });
+    await RoleModel.truncate({ cascade: true, force: true });
+    await PermissionModel.truncate({ cascade: true, force: true });
 
     // Réactiver les contraintes
     await sequelize.query("SET FOREIGN_KEY_CHECKS = 1");

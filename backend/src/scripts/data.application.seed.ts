@@ -36,7 +36,7 @@ async function seed() {
       { name: "CMS", groupId: 2 },
       { name: "CUSTOMER OVERVIEW", groupId: 2 },
       { name: "HV e-billing", groupId: 2 },
-      { name: "ICN Casing", groupId: 2 },
+      { name: "ICN Cashing", groupId: 2 },
       { name: "MyMEMO", groupId: 2 },
       { name: "MMS", groupId: 2 },
       { name: "Mobile Cashing", groupId: 2 },
@@ -47,7 +47,6 @@ async function seed() {
       { name: "ENEOPAY (POST-PAIEMENT)", groupId: 2 },
       { name: "POWERNET (PRE-PAIEMENT)", groupId: 2 },
       { name: "SAP-ISU", groupId: 2 },
-      { name: "CMS", groupId: 2 },
       { name: "SMART RECOVERY (Live Cash)", groupId: 2 },
       { name: "SUITE CRM", groupId: 2 },
       { name: "TOKENIZER CIRP", groupId: 2 },
@@ -58,7 +57,7 @@ async function seed() {
       { name: "Feedback System", groupId: 4 },
     ];
 
-    await Application.bulkCreate(appsData, { ignoreDuplicates: true });
+    await Application.bulkCreate(appsData, { ignoreDuplicates: false });
     console.log("Applications seeded.");
 
     // Fermer la connexion
