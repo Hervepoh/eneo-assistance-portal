@@ -83,9 +83,28 @@ export const createAssistanceMutationFn = async (data: any) =>
     },
   });
 
-  
-  export const submitAssistanceMutationFn = async (id: number) =>
+
+export const submitAssistanceMutationFn = async (id: number) =>
   await API.post(`/assistance/${id}/submit`);
+
+// Fonction pour valider une demande
+export const validateAssistanceMutationFn = async (id: number) => {
+  const res = await API.post(`/assistance/${id}/action`, {
+    type: "SEND_TO_VERIFICATION",
+    description: "Demande validée par le N+1 et envoyée en vérification"
+  });
+  return res.data;
+};
+
+// Fonction pour rejeter une demande avec motif
+export const rejectAssistanceMutationFn = async (id: number, reason: string) => {
+  const res = await API.post(`/assistance/${id}/action`, {
+    type: "REJECT",
+    description: "Demande rejété par le N+1",
+    comment: reason
+  });
+  return res.data;
+};
 
 
 export const actionAssistanceMutationFn = async (id: string, data: any) =>
@@ -97,24 +116,20 @@ export const getUsersQueryFn = async ({ q, limit, page }: any) => {
   const res = await API.get("/user", {
     params: { q, limit, page },
   });
-  return res.data; // { message, users }
+  return res.data; 
 };
 
 // DELETE user
 export const deleteUserFn = async (id: number) => {
   const res = await API.delete(`/api/users/${id}`);
-  return res.data; // { message: "User deleted" }
+  return res.data; 
 };
-
 
 export const getUserByIdQueryFn = async (id: string | number) =>
   await API.get(`/users/${id}`);
 
-
-
 export const createUserMutationFn = async (payload: any) =>
   await API.post(`/user`, payload);
-
 
 export const updateUserMutationFn = async (id: string | number, payload: any) =>
   await API.put(`/users/${id}`, payload);
@@ -158,10 +173,10 @@ export const getUserAuditLogsFn = async (userId: number, params?: {
   if (params?.page) searchParams.append('page', params.page.toString());
   if (params?.limit) searchParams.append('limit', params.limit.toString());
   if (params?.action) searchParams.append('action', params.action);
-  
+
   const queryString = searchParams.toString();
   const url = `/users/${userId}/audit-logs${queryString ? `?${queryString}` : ''}`;
-  
+
   return API.get(url);
 };
 

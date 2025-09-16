@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -17,19 +17,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CircleCheckBigIcon, Download, Eye, RotateCcw, Send, Undo } from "lucide-react";
+import { CircleCheckBigIcon, Download, Eye, Loader2, RotateCcw, Send } from "lucide-react";
 import Papa from "papaparse";
 import { Demande, ModeType } from "../../types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { submitAssistanceMutationFn } from "@/lib/api";
+import { rejectAssistanceMutationFn, submitAssistanceMutationFn, validateAssistanceMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { assistanceQueryKey } from "@/queries";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 
-type Props = {
+type Props = Readonly<{
   demandes: Demande[];
   onDemandeClick: (id: string) => void;
   mode: ModeType
-};
+}>;
 
 const columnHelper = createColumnHelper<Demande>();
 
@@ -37,7 +39,10 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pageSize, setPageSize] = useState(10);
-  const [dialogOpen, setDialogOpen] = useState<number | null>(null);
+  const [validateDialogOpen, setValidateDialogOpen] = useState<number | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
   const queryClient = useQueryClient();
 
   // ⚡ Mutation pour soumettre la demande
@@ -62,24 +67,84 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     }
   });
 
-  const handleSubmit = (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')) {
-      submitAssistance(id);
+  // ⚡ Mutation pour valider la demande
+  const { mutate: validateAssistance, isPending: isValidating } = useMutation({
+    mutationFn: validateAssistanceMutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [assistanceQueryKey] });
+      toast({
+        title: 'Succès',
+        description: 'La demande a été validée avec succès.',
+        variant: 'default',
+      });
+      setValidateDialogOpen(null);
+    },
+    onError: (error: Error, id: number) => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de la validation.',
+        variant: 'destructive',
+      });
+      console.error('Erreur lors de la validation:', id, error);
     }
-  };
+  });
 
-  const handleValidate = (id: number) => {
+  // ⚡ Mutation pour rejeter la demande
+  const { mutate: rejectAssistance, isPending: isRejecting } = useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      rejectAssistanceMutationFn(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [assistanceQueryKey] });
+      toast({
+        title: 'Succès',
+        description: 'La demande a été rejetée avec succès.',
+        variant: 'default',
+      });
+      setRejectDialogOpen(null);
+      setRejectReason("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors du rejet.',
+        variant: 'destructive',
+      });
+      console.error('Erreur lors du rejet:', error);
+    }
+  });
+
+  const handleSubmit =  useCallback((id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')) {
       submitAssistance(id);
     }
-  };
+  }, [submitAssistance]);
+
+  const handleValidate = useCallback((id: number) => {
+    validateAssistance(id);
+  }, [validateAssistance]);
+
+  const handleReject = useCallback((id: number) => {
+    if (!rejectReason.trim()) {
+      toast({
+        title: 'Motif requis',
+        description: 'Veuillez saisir un motif de rejet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    rejectAssistance({ id, reason: rejectReason });
+  }, [rejectReason,rejectAssistance]);
+
+  const TitreCell = ({ value }: { value: string }) => {
+    return <div className="font-medium">{value}</div>;
+  }
 
   const columns = useMemo(
     () => [
       columnHelper.accessor("reference", { header: "Reference", cell: info => info.getValue() }),
       columnHelper.accessor("titre", {
         header: "Titre",
-        cell: info => <div className="font-medium">{info.getValue()}</div>,
+        cell: info => <TitreCell value={info.getValue()} />,
       }),
       columnHelper.accessor("application", { header: "Application" }),
       columnHelper.accessor("region", { header: "Région" }),
@@ -117,34 +182,130 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
           <div className="flex items-center gap-2">
 
             {mode == "as-n1" &&
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={() => handleValidate(row.original.id)}
-                      disabled={isPending}
-                    >
-                      <CircleCheckBigIcon className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Valider</p>
-                  </TooltipContent>
-                </Tooltip>
+              <Tooltip>
+                <AlertDialog
+                  open={validateDialogOpen === row.original.id}
+                  onOpenChange={(open) => setValidateDialogOpen(open ? row.original.id : null)}
+                >
+                  <AlertDialogTrigger asChild>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={isValidating}
+                        title="Valider" // Tooltip natif HTML
+                      >
+                        <CircleCheckBigIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmer la validation</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Êtes-vous sûr de vouloir valider la demande <strong>{row.original.reference}</strong> ?
+                        <br />
+                        <span className="text-sm text-gray-600 mt-2 block">
+                          Cette action est irréversible et vous êtes responsable de toutes vos actions dans le système.
+                        </span>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleValidate(row.original.id)}
+                        className="bg-green-600 hover:bg-green-700"
+                        disabled={isValidating}
+                      >
+                        {isValidating ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Validation...
+                          </>
+                        ) : (
+                          'Valider'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <TooltipContent className="bg-blue-500 text-white">
+                  <p>Valider</p>
+                </TooltipContent>
+              </Tooltip>
             }
             {mode == "as-n1" &&
               <Tooltip>
-                <TooltipTrigger className="bg-white">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => downloadRowCsv(row.original)}
-                    disabled={isPending}
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
+                <AlertDialog
+                  open={rejectDialogOpen === row.original.id}
+                  onOpenChange={(open) => {
+                    setRejectDialogOpen(open ? row.original.id : null);
+                    if (!open) {
+                      setRejectReason(""); // Reset le motif quand on ferme
+                    }
+                  }}
+                >
+                  <AlertDialogTrigger asChild>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={isRejecting}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-lg">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Rejeter la demande</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Vous êtes sur le point de rejeter la demande <strong>{row.original.reference}</strong>.
+                        <br />
+                        <span className="text-sm text-gray-600 mt-2 block">
+                          Veuillez obligatoirement saisir le motif du rejet.
+                        </span>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2 py-4">
+                      <Label htmlFor="reject-reason" className="text-sm font-medium">
+                        Motif du rejet *
+                      </Label>
+                      <Textarea
+                        id="reject-reason"
+                        placeholder="Expliquez clairement les raisons du rejet..."
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        rows={4}
+                        className="resize-none"
+                      />
+                      {rejectReason.length > 0 && (
+                        <p className="text-xs text-gray-500">
+                          {rejectReason.length} caractères
+                        </p>
+                      )}
+                    </div>
+
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleReject(row.original.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                        disabled={isRejecting || !rejectReason.trim()}
+                      >
+                        {isRejecting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Rejet...
+                          </>
+                        ) : (
+                          'Confirmer le rejet'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <TooltipContent className="bg-red-500 text-white">
                   <p>Rejeter</p>
                 </TooltipContent>
@@ -179,58 +340,15 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
               </Tooltip>
             }
 
-            {/* <Button size="sm" variant="ghost" onClick={() => downloadRowCsv(row.original)}>
+            {/* { false && <Button size="sm" variant="ghost" onClick={() => downloadRowCsv(row.original)}>
               <Download className="w-4 h-4" />
-            </Button> */}
-
-         <AlertDialog
-                  open={dialogOpen !== null}
-                  onOpenChange={(open) => setDialogOpen(open ? row.original.id : null)}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      {/* <Trash2 className="h-4 w-4" /> */}
-                      Valider
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmer la validation</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Êtes-vous sûr de vouloir valider cette demande  <strong>{row.original.reference}</strong> ?
-                        Cette action est irréversible vous etes accountable de toutes vos actions dans le système.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction
-                        //onClick={() => handleDelete(user.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                        //disabled={deleteUserMutation.isPending}
-                      >
-                        {/* {deleteUserMutation.isPending ? ( */}
-                        { 1 == 2 ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Suppression...
-                          </>
-                        ) : (
-                          'Supprimer'
-                        )}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-
+            </Button> 
+            } */}
           </div>
         )
       })
     ],
-    [onDemandeClick]
+    [onDemandeClick, handleValidate, handleReject, handleSubmit, isPending, isRejecting, isValidating, mode, rejectDialogOpen, validateDialogOpen]
   );
 
   // Client-side global filter (simple)

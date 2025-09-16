@@ -24,14 +24,14 @@ import { useNavigate } from 'react-router-dom';
 import { assistanceQueryKey } from '@/queries';
 
 interface ListeDemandesProps {
-  title?: string;
-  mode?: ModeType;
-  statusFilter?: string;
-  categoryFilter?: string;
-  priorityFilter?: string;
-  ApplicationGroupFilter?: string;
-  ApplicationFilter?: string;
-  hideFilters?: boolean;
+  readonly title?: string;
+  readonly mode?: ModeType;
+  readonly statusFilter?: string;
+  readonly categoryFilter?: string;
+  readonly priorityFilter?: string;
+  readonly ApplicationGroupFilter?: string;
+  readonly ApplicationFilter?: string;
+  readonly hideFilters?: boolean;
 }
 
 type ViewType = 'card' | 'table';
@@ -292,6 +292,21 @@ export function ListeDemandes({
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={selectedPriorite} onValueChange={setSelectedPriorite}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Toutes les régions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes régions</SelectItem>
+                {regions.map((r: { id: string, name: string }) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    <span className="capitalize">{r.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
 
             {/* Groupe d'applications */}
             {/* <Select value={selectedApplicationGroup} onValueChange={setSelectedApplicationGroup}>

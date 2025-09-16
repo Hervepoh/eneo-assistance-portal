@@ -116,7 +116,7 @@ export class AssistanceController {
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     try {
-      await assistanceService.submit(id, userId ); 
+      await assistanceService.submit(id, userId);
       return res.status(HTTPSTATUS.OK).json({ message: "Everything look good" });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
@@ -124,19 +124,19 @@ export class AssistanceController {
   }
 
   // generic action endpoint for verifier / delegue / business / traiteur
-  async action(req: Request, res: Response) {
+  public action = asyncHandler(async (req: Request, res: Response) => {
     const actorId = (req.user as any)?.id;
     const id = Number(req.params.id);
     if (!actorId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { type, comment } = req.body;
+    const { type, description, comment } = req.body;
     try {
-      const result = await assistanceService.performAction(id, { type, comment, actorId });
+      const result = await assistanceService.performAction(id, { type, description, comment, actorId });
       return res.status(200).json({ request: result });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
-  }
+  });
 
   async delete(req: Request, res: Response) {
     const userId = (req.user as any)?.id;

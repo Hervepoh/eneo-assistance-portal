@@ -285,6 +285,7 @@ export class AssistanceService {
     id: number,
     action: {
       type:
+      | "SEND_TO_VERIFICATION"
       | "SEND_TO_DELEGUE"
       | "SEND_TO_BUSINESS"
       | "SEND_TO_BOTH"
@@ -292,7 +293,9 @@ export class AssistanceService {
       | "VALIDATE_TO_PROCESS"
       | "DELEGUE_VALIDATE"
       | "BUSINESS_VALIDATE"
-      | "TRAITER_CLOSE";
+      | "TRAITER_CLOSE"
+      | "REJECT";
+      description?: string;
       comment?: string;
       actorId: number;
     }
@@ -300,10 +303,16 @@ export class AssistanceService {
     const request = await AssistanceRequestModel.findByPk(id);
     if (!request) throw new Error("Request not found");
 
-    const { type, comment, actorId } = action;
+    const { type, description, comment, actorId } = action;
     let newStatus: AssistanceStatusEnum;
 
     switch (type) {
+      case "REJECT":
+        newStatus = AssistanceStatusEnum.REJECT;
+        break;
+       case "SEND_TO_VERIFICATION":
+        newStatus = AssistanceStatusEnum.UNDER_VERIFICATION;
+        break;
       case "SEND_TO_DELEGUE":
         newStatus = AssistanceStatusEnum.PENDING_DELEGUE;
         break;
@@ -354,7 +363,7 @@ export class AssistanceService {
     await AssistanceHistoryModel.create({
       assistanceRequestId: id,
       userId: actorId,
-      action: type,
+      action: description ?? "",
       comment: comment ?? "",
     });
 

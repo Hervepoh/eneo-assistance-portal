@@ -2,8 +2,8 @@ import React from 'react';
 import { Demande } from '../../types';
 
 interface DemandeListItemProps {
-  demande: Demande;
-  onClick?: () => void;
+  readonly demande: Demande;
+  readonly onClick?: () => void;
 }
 
 export function DemandeListItem({ demande, onClick }: DemandeListItemProps) {

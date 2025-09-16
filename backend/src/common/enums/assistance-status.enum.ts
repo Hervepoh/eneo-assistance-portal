@@ -8,4 +8,5 @@ export enum AssistanceStatusEnum {
   PENDING_BOTH = "PENDING_BOTH", // en attente des deux (délegué + business)
   TO_PROCESS = "TO_PROCESS", // chez le traiteur pour traitement
   CLOSED = "CLOSED", // traité et clôturé
+  REJECT = "REJECT", // Demande rejeté
 }
