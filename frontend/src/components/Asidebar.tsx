@@ -44,6 +44,7 @@ import Logo from "@/components/logo";
 import { useAuthContext } from "@/context/auth-provider";
 import LogoutDialog from "./LogoutDialog";
 import { useTheme } from "@/context/theme-provider";
+import { routes } from "@/routes";
 
 const Asidebar = () => {
   const { theme, setTheme } = useTheme();
@@ -62,37 +63,37 @@ const Asidebar = () => {
     },
     {
       title: "Nouvelle demande",
-      url: "/request",
+      url: routes.newAssistance,
       icon: Plus,
     },
     {
       title: "Mes demandes",
-      url: "/my-requests",
+      url: routes.myAssistance,
       icon: FileText,
     },
     {
       title: "À valider (N+1)",
-      url: "/requests-to-validate-suph",
+      url: "/requests/validate/suph",
       icon: CheckCircle,
     },
     {
       title: "À vérifier",
-      url: "/requests-to-verify",
+      url: "/requests/validate/verify",
       icon: AlertCircle,
     },
     {
       title: "À valider (DEC)",
-      url: "/requests-to-validate-dec",
+      url: "/requests/validate/dec",
       icon: CheckCircle,
     },
     {
       title: "À valider (BAO)",
-      url: "/requests-to-validate-bao",
+      url: "/requests/validate/bao",
       icon: CheckCircle,
     },
      {
       title: "En cours",
-      url: "/requests-in-process",
+      url: "/requests/in-process",
       icon: Clock,
     },
     {

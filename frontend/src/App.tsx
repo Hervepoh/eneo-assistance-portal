@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import Login from "./pages/auth/login";
 import SignUp from "./pages/auth/signup";
 import ForgotPassword from "./pages/auth/forgot-password";
@@ -46,14 +46,37 @@ function App() {
         <Route element={<AuthRoute />}>
           <Route element={<AppLayout />}>
             <Route path="home" element={<Home />} />
-            <Route path="request" element={<Request />} />
-            <Route path="requests-to-validate-suph" element={<RequestToSupH />} />
-            <Route path="requests-to-verify" element={<RequestToVerify />} />
-            <Route path="requests-to-validate-dec" element={<RequestToDec />} />
-            <Route path="requests-to-validate-bao" element={<RequestToBao />} />
-            <Route path="requests-in-process" element={<RequestToTreat />} />
-            <Route path="my-requests/:reference" element={<RequestDetail />} />
-            <Route path="my-requests" element={<MyRequest />} />
+            <Route path="requests" element={<Outlet />}>
+              <Route path="new" element={<Request />} />
+
+              <Route path="my" element={<Outlet />}>
+                <Route path="" element={<MyRequest />} />
+                <Route path=":reference" element={<RequestDetail />} />
+              </Route>
+
+              <Route path="validate/suph" element={<Outlet />}>
+                <Route path="" element={<RequestToSupH />} />
+                <Route path=":reference" element={<RequestDetail />} />
+              </Route>
+
+              <Route path="validate/verify" element={<Outlet />}>
+                <Route path="" element={<RequestToVerify />} />
+                <Route path=":reference" element={<RequestDetail />} />
+              </Route>
+
+              <Route path="validate/dec" element={<Outlet />}>
+                <Route path="" element={<RequestToDec />} />
+                <Route path=":reference" element={<RequestDetail />} />
+              </Route>
+
+              <Route path="validate/bao" element={<Outlet />}>
+                <Route path="" element={<RequestToBao />} />
+                <Route path=":reference" element={<RequestDetail />} />
+              </Route>
+
+              <Route path="in-process" element={<RequestToTreat />} />
+
+            </Route>
             <Route path="sessions" element={<Session />} />
             <Route path="security" element={<Security />} />
             <Route path="admin" element={<AdminLayout />}>
@@ -64,8 +87,8 @@ function App() {
               <Route path="users/:id/edit" element={<EditUser />} />
               <Route path="roles" element={<RolesList />} />
               {/* <Route path="roles/new" element={<RoleForm />} />
-              <Route path="permissions" element={<PermissionsList />} /> */} 
-            </Route> 
+              <Route path="permissions" element={<PermissionsList />} /> */}
+            </Route>
           </Route>
         </Route>
         {/* Catch-all for undefined routes */}
