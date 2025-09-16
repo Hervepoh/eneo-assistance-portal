@@ -20,7 +20,7 @@ import {
   getOrgReferenceQueryFn,
   getRequestsToValidateN1QueryFn
 } from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { assistanceQueryKey } from '@/queries';
 
 interface ListeDemandesProps {
@@ -53,8 +53,7 @@ const transformApiDataToDemande = (apiData: any): Demande => ({
   dateModification: apiData.updated_at,
   requestor: {
     id: apiData.user_id,
-    prenom: apiData.user_name.split(' ')[0] || '',
-    nom: apiData.user_name.split(' ').slice(1).join(' ') || '',
+    name: apiData.user_name,
     email: apiData.user_email
   },
   region: apiData.region_name,
@@ -82,7 +81,10 @@ export function ListeDemandes({
   ApplicationFilter,
   hideFilters = false
 }: ListeDemandesProps) {
+
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategorie, setSelectedCategorie] = useState<string>(categoryFilter || 'all');
   const [selectedStatut, setSelectedStatut] = useState<string>(statusFilter || 'all');
@@ -138,12 +140,14 @@ export function ListeDemandes({
   });
 
   const onDemandeClick = (reference: string) => {
+    const currentPath = location.pathname; // URL actuelle
     const ref = reference.toLowerCase();
-    if (mode === 'as-n1') {
-      navigate(`/requests-to-validate-suph/${ref}`);
-    } else {
-      navigate(`/my-requests/${ref}`);
-    }
+    navigate(`${currentPath}/${ref}`);
+    // if (mode === 'as-n1') {
+    //   navigate(`/requests/validate/suph/${ref}`);
+    // } else {
+    //   navigate(`/requests/my/${ref}`);
+    // }
   };
 
   // Reset application quand on change de groupe

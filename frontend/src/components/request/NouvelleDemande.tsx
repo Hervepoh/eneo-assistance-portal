@@ -21,6 +21,8 @@ import { Label } from "../ui/label";
 import { Separator } from "../ui/separator";
 import { AxiosError } from "axios";
 import { Agence, Application, ApplicationGroup, Delegation, Region } from "@/types";
+import { routes } from "@/routes";
+
 
 
 // ✅ Schéma de validation avec fichiers multiples
@@ -137,7 +139,7 @@ export function NouvelleDemande() {
             ? "Demande sauvegardée en brouillon"
             : "Demande soumise avec succès",
         });
-        navigate("/my-requests");
+        navigate(routes.myAssistance);
       },
       onError: (error: unknown) => {
         if (error instanceof AxiosError) {
