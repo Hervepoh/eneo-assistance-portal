@@ -8,8 +8,8 @@ import { assistanceController } from "./assistance.module";
 
 const assistanceRoutes = Router();
 
-// ===== ROUTES PUBLIQUES (si nécessaire) =====
-// assistanceRoutes.post("/", assistanceController.create); // Déplacé plus bas avec auth
+// ===== ROUTES PUBLIQUES   =====
+// assistanceRoutes.post("/", assistanceController.create); 
 
 // ===== ROUTES AUTHENTIFIÉES =====
 
@@ -17,48 +17,52 @@ const assistanceRoutes = Router();
 // assistanceRoutes.use(authenticateJWT);
 
 // --- CRÉATION ---
-
 // Créer une demande (permission assistance:create)
-assistanceRoutes.post(
-  "/",
+assistanceRoutes.post("/", 
   authenticateJWT,
   //  checkPermission(["assistance:create"]),
-  upload.array("files"),
-  assistanceController.create
+  upload.array("files"), assistanceController.create
 );
 
-// submit a draft
-assistanceRoutes.put("/submit/:id", authenticateJWT, assistanceController.submit);
-
+// Soumettre une demande brouillon (draft)
+assistanceRoutes.post("/:id/submit", 
+  authenticateJWT,
+  //  checkPermission(["assistance:create"])
+  assistanceController.submit
+);
 
 // --- RÉCUPÉRATION ---
-
-// add files to a request (multipart/form-data)  
-// expects fields desc_<originalname> for descriptions OR the front can send a JSON `fileDescriptions` mapping
-assistanceRoutes.post("/:id/files", authenticateJWT, upload.array("files", 10), assistanceController.addFiles);
-
-// generic action endpoint (verifier / delegue / business / traiteur)
-assistanceRoutes.post("/:id/action", authenticateJWT, assistanceController.action);
-
-// Mes demandes
+// Récupérer toutes mes demandes
 assistanceRoutes.get("/me",
   authenticateJWT,
   //checkPermission(["assistance:read"]),
   assistanceController.getMy
 );
 
-
-// Demandes au niveau N+1
+// Récupérer toutes les demandes au niveau N+1
 assistanceRoutes.get("/validate/n1",
   authenticateJWT,
   //checkPermission(["assistance:validate"]),
   assistanceController.getAsN1
 );
 
-
-
-//assistanceRoutes.post("/", assistanceController.create);
+// Récupérer toutes les demandes
 assistanceRoutes.get("/", assistanceController.getAll);
+
+// add files to a request (multipart/form-data)  
+// expects fields desc_<originalname> for descriptions OR the front can send a JSON `fileDescriptions` mapping
+assistanceRoutes.post("/:id/files", 
+  authenticateJWT, 
+  upload.array("files", 10), 
+  assistanceController.addFiles
+);
+
+// generic action endpoint (verifier / delegue / business / traiteur)
+assistanceRoutes.post("/:id/action", 
+  authenticateJWT, 
+  assistanceController.action
+);
+
 
 // Recherche par référence
 assistanceRoutes.get('/:reference(EN-ASS[A-Z]{3}\\d{4}-\\d{4})', assistanceController.getByReference);

@@ -7,65 +7,75 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsersQueryFn, deleteUserFn } from "@/lib/api";
-import { Search, Plus, Eye, Edit, Trash2, Users, Loader2, AlertCircle, UserCheck } from "lucide-react";
+import { getRolesQueryFn, deleteRoleMutationFn } from "@/lib/api";
+import { Search, Plus, Eye, Edit, Trash2, Shield, Loader2, AlertCircle, Key, Users } from "lucide-react";
 
-interface User {
+interface Permission {
   id: number;
   name: string;
-  email: string;
-  roles?: Array<{ name: string; id: number }>;
-  createdAt?: string;
-  status?: 'active' | 'inactive';
+  description?: string;
+  module?: string;
 }
 
-export default function UsersList() {
+interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  permissions?: Permission[];
+  usersCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export default function RolesList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<number | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Récupération utilisateurs avec debounce
+  // Récupération des rôles
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ["users", searchQuery],
-    queryFn: () => getUsersQueryFn({ q: searchQuery, limit: 20, page: 1 }),
-    select: (res) => res.users as User[],
+    queryKey: ["roles", searchQuery],
+    queryFn: () => getRolesQueryFn({ q: searchQuery, limit: 20, page: 1 }),
+    select: (res) => res.roles as Role[],
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: true,
   });
 
-  // Mutation suppression utilisateur
-  const deleteUserMutation = useMutation({
-    mutationFn: (id: number) => deleteUserFn(id),
+  // Mutation suppression rôle
+  const deleteRoleMutation = useMutation({
+    mutationFn: (id: number) => deleteRoleMutationFn(id),
     onSuccess: () => {
       toast({ 
-        title: "Utilisateur supprimé", 
-        description: "L'utilisateur a été supprimé avec succès.",
+        title: "Rôle supprimé", 
+        description: "Le rôle a été supprimé avec succès.",
       });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
       setDeleteDialogOpen(null);
     },
     onError: (err: any) => {
       toast({
         title: "Erreur de suppression",
-        description: err.message || "Impossible de supprimer l'utilisateur",
+        description: err.message || "Impossible de supprimer le rôle",
         variant: "destructive",
       });
     },
   });
 
   const handleDelete = (id: number) => {
-    deleteUserMutation.mutate(id);
+    deleteRoleMutation.mutate(id);
   };
 
   // Stats calculées
   const stats = useMemo(() => {
-    if (!data) return { total: 0, active: 0, admins: 0 };
+    if (!data) return { total: 0, withPermissions: 0, totalPermissions: 0 };
+    
+    const totalPermissions = data.reduce((acc, role) => acc + (role.permissions?.length || 0), 0);
     
     return {
       total: data.length,
-      active: data.filter(u => u.status === 'active' || !u.status).length,
-      admins: data.filter(u => u.roles?.some(r => r.name.toLowerCase().includes('admin'))).length,
+      withPermissions: data.filter(r => r.permissions && r.permissions.length > 0).length,
+      totalPermissions,
     };
   }, [data]);
 
@@ -77,10 +87,10 @@ export default function UsersList() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle className="h-5 w-5" />
-              <span>Erreur lors du chargement des utilisateurs</span>
+              <span>Erreur lors du chargement des rôles</span>
             </div>
             <Button 
-              onClick={() => queryClient.refetchQueries({ queryKey: ["users"] })}
+              onClick={() => queryClient.refetchQueries({ queryKey: ["roles"] })}
               variant="outline" 
               className="mt-4"
             >
@@ -98,16 +108,26 @@ export default function UsersList() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
-            <p className="text-gray-600 mt-1">Gérez les utilisateurs et leurs permissions</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestion des rôles</h1>
+            <p className="text-gray-600 mt-1">Gérez les rôles et leurs permissions</p>
           </div>
-          <Button 
-            onClick={() => navigate("/admin/users/new")}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nouvel utilisateur
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => navigate("/admin/permissions")}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Key className="h-4 w-4" />
+              Permissions
+            </Button>
+            <Button 
+              onClick={() => navigate("/admin/roles/new")}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nouveau rôle
+            </Button>
+          </div>
         </div>
 
         {/* Statistiques */}
@@ -115,9 +135,9 @@ export default function UsersList() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <Users className="h-8 w-8 text-blue-500" />
+                <Shield className="h-8 w-8 text-blue-500" />
                 <div>
-                  <p className="text-sm text-gray-600">Total utilisateurs</p>
+                  <p className="text-sm text-gray-600">Total rôles</p>
                   <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
               </div>
@@ -127,10 +147,10 @@ export default function UsersList() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
-                <UserCheck className="h-8 w-8 text-green-500" />
+                <Key className="h-8 w-8 text-green-500" />
                 <div>
-                  <p className="text-sm text-gray-600">Utilisateurs actifs</p>
-                  <p className="text-2xl font-bold">{stats.active}</p>
+                  <p className="text-sm text-gray-600">Avec permissions</p>
+                  <p className="text-2xl font-bold">{stats.withPermissions}</p>
                 </div>
               </div>
             </CardContent>
@@ -140,11 +160,11 @@ export default function UsersList() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="h-8 w-8 p-0 justify-center">
-                  A
+                  P
                 </Badge>
                 <div>
-                  <p className="text-sm text-gray-600">Administrateurs</p>
-                  <p className="text-2xl font-bold">{stats.admins}</p>
+                  <p className="text-sm text-gray-600">Total permissions</p>
+                  <p className="text-2xl font-bold">{stats.totalPermissions}</p>
                 </div>
               </div>
             </CardContent>
@@ -158,7 +178,7 @@ export default function UsersList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Rechercher par nom ou email..."
+              placeholder="Rechercher un rôle..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -170,12 +190,12 @@ export default function UsersList() {
         </CardContent>
       </Card>
 
-      {/* Liste des utilisateurs */}
+      {/* Liste des rôles */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Liste des utilisateurs
+            <Shield className="h-5 w-5" />
+            Liste des rôles
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -183,14 +203,14 @@ export default function UsersList() {
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center gap-2 text-gray-600">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Chargement des utilisateurs...</span>
+                <span>Chargement des rôles...</span>
               </div>
             </div>
           ) : !data?.length ? (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <Shield className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">
-                {searchQuery ? "Aucun utilisateur trouvé" : "Aucun utilisateur enregistré"}
+                {searchQuery ? "Aucun rôle trouvé" : "Aucun rôle enregistré"}
               </p>
               {searchQuery ? (
                 <Button 
@@ -202,10 +222,10 @@ export default function UsersList() {
                 </Button>
               ) : (
                 <Button 
-                  onClick={() => navigate("/admin/users/new")}
+                  onClick={() => navigate("/admin/roles/new")}
                   size="sm"
                 >
-                  Créer le premier utilisateur
+                  Créer le premier rôle
                 </Button>
               )}
             </div>
@@ -215,16 +235,16 @@ export default function UsersList() {
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Utilisateur
+                      Rôle
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
+                      Description
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rôles
+                      Permissions
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Statut
+                      Utilisateurs
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -232,59 +252,68 @@ export default function UsersList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  {data.map((role) => (
+                    <tr key={role.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                              {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold">
+                              {role.name?.charAt(0)?.toUpperCase() || 'R'}
                             </div>
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {user.name || 'Nom non défini'}
+                              {role.name || 'Nom non défini'}
                             </div>
                             <div className="text-sm text-gray-500">
-                              ID: {user.id}
+                              ID: {role.id}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{user.email}</div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                          {role.description || 'Aucune description'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap gap-1">
-                          {user.roles?.length ? (
-                            user.roles.map((role) => (
-                              <Badge 
-                                key={role.id} 
-                                variant={role.name.toLowerCase().includes('admin') ? 'default' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {role.name}
-                              </Badge>
-                            ))
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {role.permissions?.length ? (
+                            <>
+                              {role.permissions.slice(0, 3).map((permission) => (
+                                <Badge 
+                                  key={permission.id} 
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {permission.name}
+                                </Badge>
+                              ))}
+                              {role.permissions.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{role.permissions.length - 3} autres
+                                </Badge>
+                              )}
+                            </>
                           ) : (
                             <Badge variant="outline" className="text-xs">
-                              Aucun rôle
+                              Aucune permission
                             </Badge>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge 
-                          variant={user.status === 'inactive' ? 'secondary' : 'default'}
-                          className={user.status === 'inactive' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
-                        >
-                          {user.status === 'inactive' ? 'Inactif' : 'Actif'}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Users className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-900">
+                            {role.usersCount || 0}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <Button
-                            onClick={() => navigate(`/admin/users/${user.id}`)}
+                            onClick={() => navigate(`/admin/roles/${role.id}`)}
                             variant="ghost"
                             size="sm"
                             className="flex items-center gap-1"
@@ -293,7 +322,7 @@ export default function UsersList() {
                             Voir
                           </Button>
                           <Button
-                            onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                            onClick={() => navigate(`/admin/roles/${role.id}/edit`)}
                             variant="ghost"
                             size="sm"
                             className="flex items-center gap-1"
@@ -302,14 +331,15 @@ export default function UsersList() {
                             Éditer
                           </Button>
                           <AlertDialog 
-                            open={deleteDialogOpen === user.id} 
-                            onOpenChange={(open) => setDeleteDialogOpen(open ? user.id : null)}
+                            open={deleteDialogOpen === role.id} 
+                            onOpenChange={(open) => setDeleteDialogOpen(open ? role.id : null)}
                           >
                             <AlertDialogTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={role.usersCount && role.usersCount > 0}
                               >
                                 <Trash2 className="h-4 w-4" />
                                 Supprimer
@@ -319,18 +349,18 @@ export default function UsersList() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.name}</strong> ?
+                                  Êtes-vous sûr de vouloir supprimer le rôle <strong>{role.name}</strong> ?
                                   Cette action est irréversible et supprimera définitivement toutes les données associées.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Annuler</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDelete(user.id)}
+                                  onClick={() => handleDelete(role.id)}
                                   className="bg-red-600 hover:bg-red-700"
-                                  disabled={deleteUserMutation.isPending}
+                                  disabled={deleteRoleMutation.isPending}
                                 >
-                                  {deleteUserMutation.isPending ? (
+                                  {deleteRoleMutation.isPending ? (
                                     <>
                                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                       Suppression...

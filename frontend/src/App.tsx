@@ -20,6 +20,12 @@ import RequestToVerify from "./pages/requests/RequestsToVerify";
 import RequestToDec from "./pages/requests/RequestsToDec";
 import RequestToTreat from "./pages/requests/RequestsToTreat";
 import RequestToBao from "./pages/requests/RequestsToBao";
+import AdminLayout from "./layout/AdminLayout";
+import UsersList from "./pages/admin/usersList";
+import CreateUser from "./pages/admin/CreateUser";
+import EditUser from "./pages/admin/EditUser";
+import RolesList from "./pages/admin/RolesList";
+import AdministrationDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
   return (
@@ -50,14 +56,16 @@ function App() {
             <Route path="my-requests" element={<MyRequest />} />
             <Route path="sessions" element={<Session />} />
             <Route path="security" element={<Security />} />
-            {/* <Route path="admin" element={<AdminLayout />}>
+            <Route path="admin" element={<AdminLayout />}>
+              <Route path="" element={<AdministrationDashboard />} />
               <Route path="users" element={<UsersList />} />
-              <Route path="users/new" element={<UserForm />} />
-              <Route path="users/:id" element={<UserForm />} />
+              <Route path="users/new" element={<CreateUser />} />
+              <Route path="users/:id" element={<EditUser />} />
+              <Route path="users/:id/edit" element={<EditUser />} />
               <Route path="roles" element={<RolesList />} />
-              <Route path="roles/new" element={<RoleForm />} />
-              <Route path="permissions" element={<PermissionsList />} />
-            </Route> */}
+              {/* <Route path="roles/new" element={<RoleForm />} />
+              <Route path="permissions" element={<PermissionsList />} /> */} 
+            </Route> 
           </Route>
         </Route>
         {/* Catch-all for undefined routes */}

@@ -1,5 +1,4 @@
-// DemandeDataTable.tsx
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   createColumnHelper,
   flexRender,
@@ -9,12 +8,22 @@ import {
   useReactTable,
   SortingState,
 } from "@tanstack/react-table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CircleCheckBigIcon, Download, Eye, Undo } from "lucide-react";
+import { CircleCheckBigIcon, Download, Eye, RotateCcw, Send, Undo } from "lucide-react";
 import Papa from "papaparse";
 import { Demande, ModeType } from "../../types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { submitAssistanceMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import { assistanceQueryKey } from "@/queries";
 
 type Props = {
   demandes: Demande[];
@@ -25,10 +34,45 @@ type Props = {
 const columnHelper = createColumnHelper<Demande>();
 
 export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
-
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pageSize, setPageSize] = useState(10);
+  const [dialogOpen, setDialogOpen] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+
+  // ⚡ Mutation pour soumettre la demande
+  const { mutate: submitAssistance, isPending } = useMutation({
+    mutationFn: submitAssistanceMutationFn,
+    onSuccess: () => {
+      // Invalider la query 'requests' sans les filtres
+      queryClient.invalidateQueries({ queryKey: [assistanceQueryKey] });
+      toast({
+        title: 'Succès',
+        description: 'La demande a été soumise avec succès.',
+        variant: 'default',
+      });
+    },
+    onError: (error: Error, id: number) => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de la soumission.',
+        variant: 'destructive',
+      });
+      console.error('Erreur lors de la soumission:', id, error);
+    }
+  });
+
+  const handleSubmit = (id: number) => {
+    if (window.confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')) {
+      submitAssistance(id);
+    }
+  };
+
+  const handleValidate = (id: number) => {
+    if (window.confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')) {
+      submitAssistance(id);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -56,7 +100,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
         cell: info => {
           const s = info.getValue() as string;
           const map: Record<string, string> = {
-            "brouillon": "bg-gray-100 text-gray-700",
+            "DRAFT": "bg-gray-100 text-gray-700",
             "soumise": "bg-blue-100 text-blue-700",
             "en_cours": "bg-yellow-100 text-yellow-800",
             "resolue": "bg-green-100 text-green-700",
@@ -72,18 +116,115 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
 
-            {mode == "as-n1" && <Button size="sm" variant="default" onClick={() => onDemandeClick(row.original.reference)}>
-              <CircleCheckBigIcon className="w-4 h-4" />
-            </Button>}
-            {mode == "as-n1" && <Button size="sm" variant="destructive" onClick={() => downloadRowCsv(row.original)}>
-              <Undo className="w-4 h-4" />
-            </Button>}
-            <Button size="sm" variant="outline" onClick={() => onDemandeClick(row.original.reference)}>
-              <Eye className="w-4 h-4" />
-            </Button>
+            {mode == "as-n1" &&
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleValidate(row.original.id)}
+                      disabled={isPending}
+                    >
+                      <CircleCheckBigIcon className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Valider</p>
+                  </TooltipContent>
+                </Tooltip>
+            }
+            {mode == "as-n1" &&
+              <Tooltip>
+                <TooltipTrigger className="bg-white">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => downloadRowCsv(row.original)}
+                    disabled={isPending}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-red-500 text-white">
+                  <p>Rejeter</p>
+                </TooltipContent>
+              </Tooltip>
+            }
+            <Tooltip>
+              <TooltipTrigger>
+                <Button size="sm" variant="outline" onClick={() => onDemandeClick(row.original.reference)}>
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-gray-500 text-white">
+                <p>Voir</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {mode == "my" && row.original.statut.toLowerCase() == "draft" &&
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleSubmit(row.original.id)}
+                    disabled={isPending}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Soumettre</p>
+                </TooltipContent>
+              </Tooltip>
+            }
+
             {/* <Button size="sm" variant="ghost" onClick={() => downloadRowCsv(row.original)}>
-                  <Download className="w-4 h-4" />
-                </Button> */}
+              <Download className="w-4 h-4" />
+            </Button> */}
+
+         <AlertDialog
+                  open={dialogOpen !== null}
+                  onOpenChange={(open) => setDialogOpen(open ? row.original.id : null)}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      {/* <Trash2 className="h-4 w-4" /> */}
+                      Valider
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmer la validation</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Êtes-vous sûr de vouloir valider cette demande  <strong>{row.original.reference}</strong> ?
+                        Cette action est irréversible vous etes accountable de toutes vos actions dans le système.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        //onClick={() => handleDelete(user.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                        //disabled={deleteUserMutation.isPending}
+                      >
+                        {/* {deleteUserMutation.isPending ? ( */}
+                        { 1 == 2 ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Suppression...
+                          </>
+                        ) : (
+                          'Supprimer'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
 
           </div>
         )
@@ -99,7 +240,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     return demandes.filter(d =>
       d.titre.toLowerCase().includes(q) ||
       d.description.toLowerCase().includes(q) ||
-      `${d.demandeur?.name ?? ""} ${d.demandeur?.nom ?? ""}`.toLowerCase().includes(q)
+      `${d.demandeur?.name ?? ""} ${d.demandeur?.name ?? ""}`.toLowerCase().includes(q)
     );
   }, [globalFilter, demandes]);
 
@@ -121,7 +262,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     const rows = filteredRows.map(r => ({
       id: r.id,
       titre: r.titre,
-      demandeur: `${r.demandeur?.prenom ?? ""} ${r.demandeur?.nom ?? ""}`,
+      demandeur: `${r.demandeur1?.prenom ?? ""} ${r.demandeur?.nom ?? ""}`,
       region: r.region,
       delegation: r.delegation,
       agence: r.agence,

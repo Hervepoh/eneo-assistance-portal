@@ -14,6 +14,7 @@ import {
   MoonStarIcon,
   Plus,
   Settings,
+  Shield,
   SunIcon,
   User,
 } from "lucide-react";
@@ -55,7 +56,7 @@ const Asidebar = () => {
 
   const items = [
     {
-      title: "Home",
+      title: "Tableau de board",
       url: "/home",
       icon: Home,
     },
@@ -105,9 +106,9 @@ const Asidebar = () => {
       icon: Lock,
     },
     {
-      title: "Account",
-      url: "#",
-      icon: User,
+      title: "Administration",
+      url: "/admin",
+      icon: Shield,
     },
 
     {

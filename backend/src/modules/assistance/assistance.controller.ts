@@ -116,11 +116,8 @@ export class AssistanceController {
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     try {
-      // change status to UNDER_VERIFICATION / SUBMITTED
-      // const reqModel = await assistanceService.update(id, { status: AssistanceStatusEnum.SUBMITTED }, userId);
-      await assistanceService.performAction(id, { type: "SEND_TO_DELEGUE", actorId: userId }); // or simply log - example
-      // note: actual routing to verifier is handled by performAction calls from verifier later
-      // return res.status(HTTPSTATUS.OK).json({ request: reqModel });
+      await assistanceService.submit(id, userId ); 
+      return res.status(HTTPSTATUS.OK).json({ message: "Everything look good" });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }

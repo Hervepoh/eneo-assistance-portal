@@ -14,8 +14,6 @@ export default function RequestDetail() {
     enabled: !!reference,
   });
 
-  console.log("data",data)
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-600">

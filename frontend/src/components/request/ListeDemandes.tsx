@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Eye, Grid, Table, Filter, Download } from 'lucide-react';
 import { DemandeCard } from './DemandeCard';
 import { DemandeDataTable } from './DemandeDataTable';
@@ -21,6 +21,7 @@ import {
   getRequestsToValidateN1QueryFn
 } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import { assistanceQueryKey } from '@/queries';
 
 interface ListeDemandesProps {
   title?: string;
@@ -120,7 +121,7 @@ export function ListeDemandes({
 
   const { data, isLoading, isError } = useQuery({
     queryKey: [
-      'requests',
+      assistanceQueryKey,
       mode,
       { searchTerm, selectedCategorie, selectedStatut, selectedPriorite }
     ],
@@ -163,7 +164,7 @@ export function ListeDemandes({
 
   // Transformer les données de l'API
   const demandesData = data?.data?.data || [];
-  const totalCount = data?.data?.total || 0;
+  const totalCount = data?.data?.pagination.total || 0;
   const transformedDemandes = demandesData.map(transformApiDataToDemande);
 
   const hasActiveFilters =
@@ -293,7 +294,7 @@ export function ListeDemandes({
             </Select>
 
             {/* Groupe d'applications */}
-            <Select value={selectedApplicationGroup} onValueChange={setSelectedApplicationGroup}>
+            {/* <Select value={selectedApplicationGroup} onValueChange={setSelectedApplicationGroup}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Toutes les groupes" />
               </SelectTrigger>
@@ -305,11 +306,11 @@ export function ListeDemandes({
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
 
 
             {/* Application */}
-            <Select value={selectedApplication} onValueChange={setSelectedApplication}>
+            {/* <Select value={selectedApplication} onValueChange={setSelectedApplication}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Toutes les applications" />
               </SelectTrigger>
@@ -321,7 +322,7 @@ export function ListeDemandes({
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
 
           {hasActiveFilters && (

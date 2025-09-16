@@ -34,7 +34,10 @@ export const verifyMFAMutationFn = async (data: verifyMFAType) =>
 export const verifyMFALoginMutationFn = async (data: mfaLoginType) =>
   await API.post(`/mfa/verify-login`, data);
 
-export const logoutMutationFn = async () => 
+export const getUserQueryFn = async () =>
+  await API.get(`/auth/me`);
+
+export const logoutMutationFn = async () =>
   await API.post(`/auth/logout`);
 
 export const mfaSetupQueryFn = async () => {
@@ -80,28 +83,94 @@ export const createAssistanceMutationFn = async (data: any) =>
     },
   });
 
+  
+  export const submitAssistanceMutationFn = async (id: number) =>
+  await API.post(`/assistance/${id}/submit`);
+
+
 export const actionAssistanceMutationFn = async (id: string, data: any) =>
   await API.post(`/assistance/${id}/action`, data);
 
 // USERS
-export const getUsersQueryFn = async (params: any) =>
-  await API.get(`/users`, { params });
+// GET users
+export const getUsersQueryFn = async ({ q, limit, page }: any) => {
+  const res = await API.get("/user", {
+    params: { q, limit, page },
+  });
+  return res.data; // { message, users }
+};
+
+// DELETE user
+export const deleteUserFn = async (id: number) => {
+  const res = await API.delete(`/api/users/${id}`);
+  return res.data; // { message: "User deleted" }
+};
+
 
 export const getUserByIdQueryFn = async (id: string | number) =>
   await API.get(`/users/${id}`);
 
+
+
 export const createUserMutationFn = async (payload: any) =>
-  await API.post(`/users`, payload);
+  await API.post(`/user`, payload);
+
 
 export const updateUserMutationFn = async (id: string | number, payload: any) =>
   await API.put(`/users/${id}`, payload);
 
+
+/**
+ * Réinitialise le mot de passe d'un utilisateur
+ */
+export const resetUserPasswordFn = async (id: number) => {
+  return API.post(`/users/${id}/reset-password`, {});
+};
+
 export const deleteUserMutationFn = async (id: string | number) =>
   await API.delete(`/users/${id}`);
 
+
+/**
+ * Change le statut d'un utilisateur (actif/inactif)
+ */
+export const toggleUserStatusFn = async (id: number, status: 'active' | 'inactive') => {
+  return API.put(`/users/${id}/status`, { status });
+};
+export interface AuditLog {
+  id: number;
+  userId: number;
+  action: string;
+  details: string;
+  ipAddress: string;
+  userAgent: string;
+  createdAt: string;
+}
+/**
+ * Récupère les logs d'audit pour un utilisateur
+ */
+export const getUserAuditLogsFn = async (userId: number, params?: {
+  page?: number;
+  limit?: number;
+  action?: string;
+}): Promise<{ logs: AuditLog[]; total: number; page: number; limit: number }> => {
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.append('page', params.page.toString());
+  if (params?.limit) searchParams.append('limit', params.limit.toString());
+  if (params?.action) searchParams.append('action', params.action);
+  
+  const queryString = searchParams.toString();
+  const url = `/users/${userId}/audit-logs${queryString ? `?${queryString}` : ''}`;
+  
+  return API.get(url);
+};
+
+
 // ROLES
-export const getRolesQueryFn = async (params: any) =>
-  await API.get(`/roles`, { params });
+export const getRolesQueryFn = async (params: any) => {
+  const res = await API.get(`/role`, { params });
+  return res.data
+}
 
 export const getRoleByIdQueryFn = async (id: string | number) =>
   await API.get(`/roles/${id}`);

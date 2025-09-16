@@ -20,7 +20,7 @@ export function DemandeListItem({ demande, onClick }: DemandeListItemProps) {
         
         <div className="flex items-center gap-3 ml-4">
           <span className={`px-2 py-1 rounded text-xs font-medium ${
-            demande.statut === 'resolue' ? 'bg-green-100 text-green-800' :
+            demande.statut === 'resolue' ? 'bg-green-1000 text-green-800' :
             demande.statut === 'en_cours' ? 'bg-blue-100 text-blue-800' :
             demande.statut === 'brouillon' ? 'bg-gray-100 text-gray-800' :
             'bg-yellow-100 text-yellow-800'

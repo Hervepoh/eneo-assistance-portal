@@ -16,7 +16,7 @@ export class SessionController {
   public getAllSession = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) throw new NotFoundException("User not found in request");
-    
+
     const { sessions } = await this.sessionService.getAllSession(userId);
 
     const modifySessions = sessions.map((session) => ({
@@ -39,8 +39,16 @@ export class SessionController {
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Session retrieved successfully",
-      user,
-      session,
+      user: {
+        id: user?.id,
+        name: user?.name,
+        email: user?.email,
+        // userPreferences: req.user?.userPreferences,
+        activeRole: req.user?.activeRole,
+        activePermissions: req.user?.activePermissions,
+        roles: req.user?.roles
+      },
+      session
     });
   });
 

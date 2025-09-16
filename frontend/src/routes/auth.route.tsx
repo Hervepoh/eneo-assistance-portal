@@ -1,6 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
 import useAuth from "@/hooks/use-auth";
-import { Loader } from "lucide-react";
 
 const AuthRoute = () => {
   const { data, isLoading } = useAuth();

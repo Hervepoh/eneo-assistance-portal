@@ -10,6 +10,9 @@ type UserType = {
   isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+  activeRole?: {id:number,name:string} 
+  activePermissions?: string[];
+  roles?: {id:number,name:string}[];
   userPreferences: {
     enable2FA: boolean;
   };

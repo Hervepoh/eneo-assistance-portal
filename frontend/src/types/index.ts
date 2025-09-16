@@ -98,7 +98,7 @@ export type AssistanceRequestPayload = {
 
 
 export interface Demande {
-  id: ID;
+  id: number;
   reference: string;
   titre: string;
   description: string;
@@ -108,7 +108,7 @@ export interface Demande {
   application: string;
   categorie: 'technique' | 'administrative' | 'financiere' | 'rh' | 'autre';
   priorite: 'basse' | 'normale' | 'haute' | 'critique';
-  statut: 'brouillon' | 'soumise' | 'verification' | 'validation_dec' | 'validation_bao' | 'approuvee' | 'assignee' | 'en_cours' | 'resolue' | 'fermee' | 'rejetee';
+  statut: 'brouillon' | 'DRAFT' | 'soumise' | 'verification' | 'validation_dec' | 'validation_bao' | 'approuvee' | 'assignee' | 'en_cours' | 'resolue' | 'fermee' | 'rejetee';
   requestor: User;
   verificateur?: User;
   dec?: User;
