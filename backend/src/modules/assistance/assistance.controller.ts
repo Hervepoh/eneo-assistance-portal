@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { AssistanceService, assistanceService } from "./assistance.service";
 import { HTTPSTATUS } from "../../config/http.config";
+import { AssistanceStatusEnum } from "../../common/enums/assistance-status.enum";
 import { CreateAssistanceDto, createAssistanceSchema } from "./assistance.schemas";
 import { asyncHandler } from "../../middlewares/asyncHandler";
 import { AssistanceFilters } from "../../common/interface/assistance.interface";
-import { getComments } from "./assistance.helpers";
 
 export class AssistanceController {
   private readonly service: AssistanceService;
@@ -17,24 +17,21 @@ export class AssistanceController {
     const userId = (req.user as any)?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const files = req.files as Express.Multer.File[];
-    const comments = getComments(req.body.comments);
-
     // Préparer les données pour la validation
     const requestData = {
       ...req.body,
       userId: parseInt(userId),
       superiorUserId: parseInt(userId),
-      files,
-      comments
+      files: req.files || [],
+      comments: Array.isArray(req.body.comments)
+        ? req.body.comments
+        : req.body.comments ? JSON.parse(req.body.comments) : []
     };
 
     // Valider les données avec Zod
     const validatedData: CreateAssistanceDto = createAssistanceSchema.parse(requestData);
 
-    // Execute service to create 
     const created = await assistanceService.create(validatedData);
-
     return res.status(HTTPSTATUS.CREATED).json({
       success: true,
       message: 'Demande créée avec succès',
@@ -102,8 +99,8 @@ export class AssistanceController {
     const id = Number(req.params.id);
 
     try {
-      const updated = await assistanceService.update(id, req.body, userId);
-      return res.status(HTTPSTATUS.OK).json({ request: updated });
+      // const updated = await assistanceService.update(id, req.body, userId);
+      // return res.status(HTTPSTATUS.OK).json({ request: updated });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
@@ -116,27 +113,30 @@ export class AssistanceController {
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     try {
-      await assistanceService.submit(id, userId);
-      return res.status(HTTPSTATUS.OK).json({ message: "Everything look good" });
+      // change status to UNDER_VERIFICATION / SUBMITTED
+      // const reqModel = await assistanceService.update(id, { status: AssistanceStatusEnum.SUBMITTED }, userId);
+      await assistanceService.performAction(id, { type: "SEND_TO_DELEGUE", actorId: userId }); // or simply log - example
+      // note: actual routing to verifier is handled by performAction calls from verifier later
+      // return res.status(HTTPSTATUS.OK).json({ request: reqModel });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
   }
 
   // generic action endpoint for verifier / delegue / business / traiteur
-  public action = asyncHandler(async (req: Request, res: Response) => {
+  async action(req: Request, res: Response) {
     const actorId = (req.user as any)?.id;
     const id = Number(req.params.id);
     if (!actorId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { type, description, comment } = req.body;
+    const { type, comment } = req.body;
     try {
-      const result = await assistanceService.performAction(id, { type, description, comment, actorId });
+      const result = await assistanceService.performAction(id, { type, comment, actorId });
       return res.status(200).json({ request: result });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }
-  });
+  }
 
   async delete(req: Request, res: Response) {
     const userId = (req.user as any)?.id;

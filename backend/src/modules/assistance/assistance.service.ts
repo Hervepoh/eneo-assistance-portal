@@ -3,7 +3,6 @@ import { AssistanceStatusEnum } from "../../common/enums/assistance-status.enum"
 import { AssistanceFileModel, AssistanceHistoryModel, AssistanceRequestModel, AssistanceRequestViewModel, sequelize, UserModel } from "../../database/models";
 import { CreateAssistanceDto } from "./assistance.schemas";
 import { AssistanceFilters } from "../../common/interface/assistance.interface";
-import { ID } from "../../common/interface/rbac";
 
 // Types des modes de recherche
 type RequestMode = 'my' | 'as-n1' | 'all';
@@ -25,8 +24,8 @@ export class AssistanceService {
         userId,
         superiorUserId,
         description,
-        files,
         comments,
+        files
       } = dto;
 
       const finalStatus: AssistanceStatusEnum =
@@ -51,7 +50,7 @@ export class AssistanceService {
       // Traitement des fichiers
       if (files && files.length > 0) {
         // Créer les entrées pour chaque fichier
-        const fichiersPromises = files.map((file: any, index: number) => {
+        const fichiersPromises = files.map((file, index) => {
           return AssistanceFileModel.create({
             assistanceRequestId: nouvelleDemande.id,
             filePath: file.path,
@@ -60,15 +59,6 @@ export class AssistanceService {
         });
 
         await Promise.all(fichiersPromises);
-      }
-
-      if (finalStatus === AssistanceStatusEnum.SUBMITTED) {
-        // Historique vie de la demande
-        await AssistanceHistoryModel.create({
-          assistanceRequestId: nouvelleDemande.id,
-          action: "Demande créée",
-          userId,
-        }, { transaction });
       }
 
       // Commit de la transaction
@@ -91,23 +81,7 @@ export class AssistanceService {
       await transaction.rollback();
       throw error;
     }
-  }
 
-  async submit(id: ID, userId: ID) {
-    const request = await AssistanceRequestModel.findByPk(id);
-    if (!request) 
-      throw new Error("Request not found");
-
-    // ✅ Vérification que le user est bien le propriétaire
-    if (request.userId !== userId) 
-      throw new Error("You are not allowed to submit this request");
-    
-    // éviter que quelqu’un "resoumette" une demande déjà traitée
-    if (request.status !== AssistanceStatusEnum.DRAFT) 
-      throw new Error("Only draft requests can be submitted");
-    
-    await request.update({ status: AssistanceStatusEnum.SUBMITTED });
-    return request;
   }
 
 
@@ -190,7 +164,7 @@ export class AssistanceService {
     };
   }
 
-
+  // Méthodes alias pour la rétrocompatibilité
   async findByUser(userId: number, filters: AssistanceFilters) {
     return this.findRequests('my', userId, filters);
   }
@@ -202,6 +176,7 @@ export class AssistanceService {
   async findAll(filters: AssistanceFilters) {
     return this.findRequests('all', undefined, filters);
   }
+
 
 
   async addFiles(requestId: number, files: { filePath: string; description?: string }[], userId: number) {
@@ -220,9 +195,7 @@ export class AssistanceService {
     return created;
   }
 
-  /**
-   * Trouve une demande par son id avec les relations
-   */
+
   async findById(id: number) {
     return AssistanceRequestModel.findByPk(id, {
       include: [{ model: AssistanceFileModel, as: "files" }, { model: AssistanceHistoryModel, as: "history" }],
@@ -230,8 +203,8 @@ export class AssistanceService {
   }
 
   /**
-   * Trouve une demande par sa référence avec les relations
-   */
+ * Trouve une demande par sa référence avec les relations
+ */
   async findByReference(reference: string) {
     return AssistanceRequestModel.findOne({
       where: {
@@ -260,32 +233,27 @@ export class AssistanceService {
     });
   }
 
+  // async update(id: number, dto: Partial<CreateDto>, userId: number) {
+  //   const request = await AssistanceRequestModel.findByPk(id);
+  //   if (!request) throw new Error("Request not found");
 
+  //   await request.update({ ...dto });
 
+  //   await AssistanceHistoryModel.create({
+  //     assistanceRequestId: id,
+  //     userId,
+  //     action: "UPDATE",
+  //     comment: dto.comment ?? "",
+  //   });
 
-
-  async update(id: number, dto: Partial<any>, userId: number) {
-    const request = await AssistanceRequestModel.findByPk(id);
-    if (!request) throw new Error("Request not found");
-
-    await request.update({ ...dto });
-
-    await AssistanceHistoryModel.create({
-      assistanceRequestId: id,
-      userId,
-      action: "UPDATE",
-      comment: dto.comment ?? "",
-    });
-
-    return request;
-  }
+  //   return request;
+  // }
 
   // workflow actions performed by verifier/delegate/business/trainer
   async performAction(
     id: number,
     action: {
       type:
-      | "SEND_TO_VERIFICATION"
       | "SEND_TO_DELEGUE"
       | "SEND_TO_BUSINESS"
       | "SEND_TO_BOTH"
@@ -293,9 +261,7 @@ export class AssistanceService {
       | "VALIDATE_TO_PROCESS"
       | "DELEGUE_VALIDATE"
       | "BUSINESS_VALIDATE"
-      | "TRAITER_CLOSE"
-      | "REJECT";
-      description?: string;
+      | "TRAITER_CLOSE";
       comment?: string;
       actorId: number;
     }
@@ -303,16 +269,10 @@ export class AssistanceService {
     const request = await AssistanceRequestModel.findByPk(id);
     if (!request) throw new Error("Request not found");
 
-    const { type, description, comment, actorId } = action;
+    const { type, comment, actorId } = action;
     let newStatus: AssistanceStatusEnum;
 
     switch (type) {
-      case "REJECT":
-        newStatus = AssistanceStatusEnum.REJECT;
-        break;
-       case "SEND_TO_VERIFICATION":
-        newStatus = AssistanceStatusEnum.UNDER_VERIFICATION;
-        break;
       case "SEND_TO_DELEGUE":
         newStatus = AssistanceStatusEnum.PENDING_DELEGUE;
         break;
@@ -363,7 +323,7 @@ export class AssistanceService {
     await AssistanceHistoryModel.create({
       assistanceRequestId: id,
       userId: actorId,
-      action: description ?? "",
+      action: type,
       comment: comment ?? "",
     });
 

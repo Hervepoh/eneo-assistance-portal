@@ -15,7 +15,11 @@ export class SessionController {
   // Liste toutes les sessions
   public getAllSession = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.id;
+    console.log("getAllSession req.user",req.user)
     if (!userId) throw new NotFoundException("User not found in request");
+
+    console.log("userId", userId);
+    console.log("req.sessionId", req.sessionId);
 
     const { sessions } = await this.sessionService.getAllSession(userId);
 
@@ -39,16 +43,8 @@ export class SessionController {
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Session retrieved successfully",
-      user: {
-        id: user?.id,
-        name: user?.name,
-        email: user?.email,
-        // userPreferences: req.user?.userPreferences,
-        activeRole: req.user?.activeRole,
-        activePermissions: req.user?.activePermissions,
-        roles: req.user?.roles
-      },
-      session
+      user,
+      session,
     });
   });
 
