@@ -1,4 +1,4 @@
-import React from 'react';
+//import React from 'react';
 import { DivideIcon as LucideIcon } from 'lucide-react';
 
 export interface StatsCardProps {
@@ -7,7 +7,7 @@ export interface StatsCardProps {
   icon: typeof LucideIcon;
   color: 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'purple';
   description?: string;
-  onClick?: (url: string) => void
+  onClick?: () => void
   trend?: {
     value: number;
     isPositive: boolean;
