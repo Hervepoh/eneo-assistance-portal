@@ -55,38 +55,57 @@ body {
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Arrière-plans principaux - Plus profonds et sophistiqués */
+    --background: 222.2 84% 2.5%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 225 71% 4%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 225 71% 4%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    
+    /* Couleurs primaires - Bleu plus vibrant et accessible */
+    --primary: 217.2 91.2% 65%;
+    --primary-foreground: 222.2 84% 4.9%;
+    
+    /* Couleurs secondaires - Grays améliorés */
+    --secondary: 217.2 32.6% 15%;
+    --secondary-foreground: 210 40% 95%;
+    --muted: 217.2 32.6% 12%;
+    --muted-foreground: 215 20.2% 70%;
+    --accent: 217.2 32.6% 18%;
+    --accent-foreground: 210 40% 95%;
+    
+    /* Couleurs d'état - Plus contrastées */
+    --destructive: 0 72% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 76% 50%;
+    --success-foreground: 222.2 84% 4.9%;
+    --warning: 45 93% 58%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --info: 217.2 91.2% 65%;
+    --info-foreground: 222.2 84% 4.9%;
+    
+    /* Bordures et inputs - Plus subtiles mais visibles */
+    --border: 217.2 32.6% 20%;
+    --input: 217.2 32.6% 18%;
+    --ring: 217.2 91.2% 65%;
+    
+    /* Couleurs de graphiques - Plus vives en mode sombre */
+    --chart-1: 220 70% 60%;
+    --chart-2: 160 60% 55%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 280 65% 70%;
+    --chart-5: 340 75% 65%;
+    
+    /* Sidebar - Design moderne et élégant */
+    --sidebar-background: 222.2 84% 3%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 217.2 91.2% 65%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 217.2 32.6% 12%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 217.2 32.6% 15%;
+    --sidebar-ring: 217.2 91.2% 65%;
   }
 }
 
@@ -97,4 +116,255 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Améliorations pour le thème sombre */
+@layer components {
+  /* États de statut améliorés pour le mode sombre */
+  .dark .status-draft {
+    @apply bg-slate-800 text-slate-300 border-slate-700;
+  }
+  
+  .dark .status-submitted {
+    @apply bg-blue-900/50 text-blue-300 border-blue-700;
+  }
+  
+  .dark .status-under-verification {
+    @apply bg-orange-900/50 text-orange-300 border-orange-700;
+  }
+  
+  .dark .status-pending-delegue {
+    @apply bg-purple-900/50 text-purple-300 border-purple-700;
+  }
+  
+  .dark .status-pending-business {
+    @apply bg-yellow-900/50 text-yellow-300 border-yellow-700;
+  }
+  
+  .dark .status-to-process {
+    @apply bg-indigo-900/50 text-indigo-300 border-indigo-700;
+  }
+  
+  .dark .status-closed {
+    @apply bg-green-900/50 text-green-300 border-green-700;
+  }
+  
+  .dark .status-to-modify {
+    @apply bg-red-900/50 text-red-300 border-red-700;
+  }
+  
+  /* Cartes et conteneurs améliorés */
+  .dark .card-enhanced {
+    @apply bg-slate-900/50 border-slate-800 shadow-xl backdrop-blur-sm;
+  }
+  
+  .dark .card-enhanced:hover {
+    @apply bg-slate-900/70 border-slate-700 shadow-2xl;
+  }
+  
+  /* Navigation et sidebar améliorées */
+  .dark .nav-item-active {
+    @apply bg-blue-900/30 text-blue-300 border-l-4 border-l-blue-500;
+  }
+  
+  .dark .nav-item:hover {
+    @apply bg-slate-800/50 text-slate-200;
+  }
+  
+  /* Boutons d'action améliorés */
+  .dark .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20;
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-slate-700 hover:bg-slate-600 text-slate-200 border-slate-600;
+  }
+  
+  .dark .btn-success {
+    @apply bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-900/20;
+  }
+  
+  .dark .btn-danger {
+    @apply bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/20;
+  }
+  
+  .dark .btn-warning {
+    @apply bg-yellow-600 hover:bg-yellow-500 text-black shadow-lg shadow-yellow-900/20;
+  }
+  
+  /* Inputs et formulaires améliorés */
+  .dark .input-enhanced {
+    @apply bg-slate-900/50 border-slate-700 text-slate-200 placeholder-slate-400;
+  }
+  
+  .dark .input-enhanced:focus {
+    @apply border-blue-500 ring-blue-500/20 bg-slate-900/70;
+  }
+  
+  /* Tables améliorées */
+  .dark .table-header {
+    @apply bg-slate-800/80 text-slate-300 border-b border-slate-700;
+  }
+  
+  .dark .table-row {
+    @apply border-b border-slate-800/50 hover:bg-slate-900/30;
+  }
+  
+  .dark .table-row:nth-child(even) {
+    @apply bg-slate-900/20;
+  }
+  
+  /* Workflow et progression améliorés */
+  .dark .workflow-step-completed {
+    @apply bg-green-900/30 border-green-700 text-green-300;
+  }
+  
+  .dark .workflow-step-current {
+    @apply bg-blue-900/30 border-blue-500 text-blue-300 ring-2 ring-blue-500/20;
+  }
+  
+  .dark .workflow-step-pending {
+    @apply bg-slate-800/50 border-slate-600 text-slate-400;
+  }
+  
+  .dark .workflow-step-rejected {
+    @apply bg-red-900/30 border-red-700 text-red-300;
+  }
+  
+  /* Progress bars améliorées */
+  .dark .progress-bg {
+    @apply bg-slate-800;
+  }
+  
+  .dark .progress-fill {
+    @apply bg-gradient-to-r from-blue-600 to-blue-500;
+  }
+  
+  /* Tooltips et popovers améliorés */
+  .dark .tooltip-enhanced {
+    @apply bg-slate-800 text-slate-200 border border-slate-700 shadow-xl;
+  }
+  
+  /* Scrollbars améliorées pour le mode sombre */
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-slate-900;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 rounded-full;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-600;
+  }
+  
+  /* Animations et transitions améliorées */
+  .dark .fade-in-dark {
+    animation: fadeInDark 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeInDark {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* États de focus améliorés */
+  .dark .focus-enhanced:focus-visible {
+    @apply outline-none ring-2 ring-blue-500/50 ring-offset-2 ring-offset-slate-900;
+  }
+  
+  /* Effets de brillance pour les éléments importants */
+  .dark .glow-effect {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+  
+  .dark .glow-effect:hover {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+  
+  /* Amélioration des modales et dialogues */
+  .dark .modal-backdrop {
+    @apply bg-black/60 backdrop-blur-sm;
+  }
+  
+  .dark .modal-content {
+    @apply bg-slate-900/95 border-slate-700 shadow-2xl backdrop-blur-md;
+  }
+  
+  /* Headers et footers améliorés */
+  .dark .header-enhanced {
+    @apply bg-slate-900/90 border-b border-slate-800 backdrop-blur-md;
+  }
+  
+  .dark .footer-enhanced {
+    @apply bg-slate-900/90 border-t border-slate-800 backdrop-blur-md;
+  }
+  
+  /* Badges de notification améliorés */
+  .dark .notification-badge {
+    @apply bg-red-600 text-white shadow-lg shadow-red-900/30;
+  }
+  
+  .dark .notification-badge.info {
+    @apply bg-blue-600 shadow-blue-900/30;
+  }
+  
+  .dark .notification-badge.success {
+    @apply bg-green-600 shadow-green-900/30;
+  }
+  
+  .dark .notification-badge.warning {
+    @apply bg-yellow-600 text-black shadow-yellow-900/30;
+  }
+  
+  /* Amélioration des dividers */
+  .dark .divider {
+    @apply border-slate-700/50;
+  }
+  
+  /* Code blocks améliorés */
+  .dark .code-block {
+    @apply bg-slate-900/80 border border-slate-700 text-slate-200;
+  }
+  
+  /* Loading states améliorés */
+  .dark .loading-skeleton {
+    @apply bg-slate-800/50;
+    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Gestion des hauteurs de progress bars par étapes de 10% */
+  .progress-0 { width: 0%; }
+  .progress-10 { width: 10%; }
+  .progress-20 { width: 20%; }
+  .progress-30 { width: 30%; }
+  .progress-40 { width: 40%; }
+  .progress-50 { width: 50%; }
+  .progress-60 { width: 60%; }
+  .progress-70 { width: 70%; }
+  .progress-80 { width: 80%; }
+  .progress-90 { width: 90%; }
+  .progress-100 { width: 100%; }
 }

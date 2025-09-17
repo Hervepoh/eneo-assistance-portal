@@ -1,0 +1,169 @@
+/* Styles pour les barres de progression du workflow */
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
+
+.progress-bar-detailed {
+  transition: width 0.5s ease-in-out;
+}
+
+/* Alternative sans styles inline pour les barres de progression */
+.progress-0 { width: 0%; }
+.progress-10 { width: 10%; }
+.progress-20 { width: 20%; }
+.progress-30 { width: 30%; }
+.progress-40 { width: 40%; }
+.progress-50 { width: 50%; }
+.progress-60 { width: 60%; }
+.progress-70 { width: 70%; }
+.progress-80 { width: 80%; }
+.progress-90 { width: 90%; }
+.progress-100 { width: 100%; }
+
+/* Classes d'aide pour les animations */
+.workflow-item-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.workflow-item-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* Améliorations spécifiques pour le mode sombre */
+.dark .progress-bar {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.dark .progress-bar-detailed {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Styles de statut améliorés pour le workflow */
+.dark .workflow-status-draft {
+  background: rgba(51, 65, 85, 0.3);
+  border: 1px solid #475569;
+  color: #cbd5e1;
+}
+
+.dark .workflow-status-submitted {
+  background: rgba(30, 58, 138, 0.3);
+  border: 1px solid #3730a3;
+  color: #93c5fd;
+}
+
+.dark .workflow-status-under-verification {
+  background: rgba(194, 65, 12, 0.3);
+  border: 1px solid #c2410c;
+  color: #fdba74;
+}
+
+.dark .workflow-status-pending-delegue {
+  background: rgba(107, 33, 168, 0.3);
+  border: 1px solid #7c3aed;
+  color: #c4b5fd;
+}
+
+.dark .workflow-status-pending-business {
+  background: rgba(161, 98, 7, 0.3);
+  border: 1px solid #a16207;
+  color: #fcd34d;
+}
+
+.dark .workflow-status-to-process {
+  background: rgba(67, 56, 202, 0.3);
+  border: 1px solid #4338ca;
+  color: #a5b4fc;
+}
+
+.dark .workflow-status-closed {
+  background: rgba(21, 128, 61, 0.3);
+  border: 1px solid #166534;
+  color: #86efac;
+}
+
+.dark .workflow-status-to-modify {
+  background: rgba(185, 28, 28, 0.3);
+  border: 1px solid #dc2626;
+  color: #fca5a5;
+}
+
+/* Animations améliorées pour le mode sombre */
+.dark .workflow-item-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+  filter: brightness(0.8);
+}
+
+.dark .workflow-item-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  filter: brightness(1);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out, filter 0.4s ease-out;
+}
+
+/* Effets de hover pour les éléments de workflow */
+.dark .workflow-item:hover {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: #475569;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease-out;
+}
+
+/* Icônes de statut améliorées */
+.dark .workflow-icon-completed {
+  color: #22c55e;
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.3));
+}
+
+.dark .workflow-icon-current {
+  color: #3b82f6;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+  animation: pulse 2s infinite;
+}
+
+.dark .workflow-icon-pending {
+  color: #64748b;
+  opacity: 0.7;
+}
+
+.dark .workflow-icon-rejected {
+  color: #ef4444;
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.3));
+}
+
+/* Badges et indicateurs */
+.dark .workflow-badge {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #475569;
+  color: #e2e8f0;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.dark .workflow-badge-priority-haute {
+  background: rgba(185, 28, 28, 0.2);
+  border: 1px solid #dc2626;
+  color: #fca5a5;
+}
+
+.dark .workflow-badge-priority-critique {
+  background: rgba(153, 27, 27, 0.3);
+  border: 1px solid #b91c1c;
+  color: #fecaca;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}

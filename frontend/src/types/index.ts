@@ -133,6 +133,8 @@ export interface Demande {
 export interface User {
   id: number;
   name: string;
+  nom: string;
+  prenom: string;
   email: string;
   role?: 'utilisateur' | 'verificateur' | 'dec' | 'bao' | 'technicien' | 'administrateur';
   departement?: string;

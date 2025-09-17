@@ -1,130 +1,78 @@
-import React from 'react';
 import { FileText, Clock, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import { DemandeCard } from '../request/DemandeCard';
+import { Demande } from '@/types';
 
-// Données fictives pour le tableau de bord
-const fakeStatistiques = {
-  totalDemandes: 42,
-  demandesEnAttente: 8,
-  demandesEnCours: 12,
-  demandesResolues: 22,
-  demandesParCategorie: {
-    technique: 18,
-    administrative: 12,
-    financiere: 6,
-    rh: 4,
-    autre: 2
-  },
-  demandesParPriorite: {
-    basse: 10,
-    normale: 20,
-    haute: 8,
-    critique: 4
-  }
-};
-
-const fakeDemandes = [
-  {
-    id: 1,
-    reference: 'EN-ASSCMS0042-2024',
-    titre: "Problème de connexion CMS",
-    description: "Impossible d'accéder au système CMS depuis ce matin",
-    statut: "en_cours",
-    priorite: "haute",
-    categorie: "technique",
-    dateCreation: "2024-01-15T10:30:00",
-    dateModification: "2024-01-15T14:20:00",
-    demandeur: {
-      id: 1,
-      prenom: "Jean",
-      nom: "Dupont",
-      email: "jean.dupont@example.com"
-    }
-  },
-  {
-    id: 2,
-    reference: 'EN-ASSBCV0023-2024',
-    titre: "Validation annulation facture",
-    description: "Besoin de valider l'annulation de la facture #12345",
-    statut: "soumise",
-    priorite: "normale",
-    categorie: "financiere",
-    dateCreation: "2024-01-14T09:15:00",
-    dateModification: "2024-01-14T09:15:00",
-    demandeur: {
-      id: 2,
-      prenom: "Marie",
-      nom: "Martin",
-      email: "marie.martin@example.com"
-    }
-  },
-  {
-    id: 3,
-    reference: 'EN-ASSHRM0015-2024',
-    titre: "Demande formation management",
-    description: "Formation sur les techniques de management d'équipe",
-    statut: "resolue",
-    priorite: "basse",
-    categorie: "rh",
-    dateCreation: "2024-01-13T16:45:00",
-    dateModification: "2024-01-13T17:30:00",
-    demandeur: {
-      id: 3,
-      prenom: "Pierre",
-      nom: "Durand",
-      email: "pierre.durand@example.com"
-    }
-  },
-  {
-    id: 4,
-    reference: 'EN-ASSSGC0038-2024',
-    titre: "Mise à jour système commercial",
-    description: "Mise à jour vers la version 2.0 du système de gestion",
-    statut: "en_cours",
-    priorite: "normale",
-    categorie: "technique",
-    dateCreation: "2024-01-12T08:20:00",
-    dateModification: "2024-01-15T11:45:00",
-    demandeur: {
-      id: 4,
-      prenom: "Sophie",
-      nom: "Leroy",
-      email: "sophie.leroy@example.com"
-    }
-  },
-  {
-    id: 5,
-    reference: 'EN-ASSCRD0009-2024',
-    titre: "Incident critique base de données",
-    description: "La base de données ne répond plus depuis 1 heure",
-    statut: "brouillon",
-    priorite: "critique",
-    categorie: "technique",
-    dateCreation: "2024-01-15T16:30:00",
-    dateModification: "2024-01-15T16:30:00",
-    demandeur: {
-      id: 5,
-      prenom: "Thomas",
-      nom: "Moreau",
-      email: "thomas.moreau@example.com"
-    }
-  }
-];
-
-// Hook fictif pour simuler le chargement des données
-const useDemandes = () => {
-  return {
-    demandes: fakeDemandes,
-    statistiques: fakeStatistiques,
-    isLoading: false,
-    error: null
+interface DashboardProps {
+  demandes?: Demande[];
+  statistiques?: {
+    totalDemandes: number;
+    demandesEnAttente: number;
+    demandesEnCours: number;
+    demandesResolues: number;
+    demandesParCategorie: Record<string, number>;
+    demandesParPriorite: Record<string, number>;
   };
-};
+  isLoading?: boolean;
+  error?: string | null;
+}
 
-export function Dashboard() {
-  const { demandes, statistiques } = useDemandes();
-  const demandesRecentes = demandes.slice(0, 5);
+export function Dashboard({ 
+  demandes = [], 
+  statistiques, 
+  isLoading = false, 
+  error = null 
+}: DashboardProps) {
+  
+  // Calculer les statistiques depuis les demandes si non fournies
+  const calculatedStats = statistiques || {
+    totalDemandes: demandes.length,
+    demandesEnAttente: demandes.filter(d => ['brouillon', 'DRAFT', 'soumise'].includes(d.statut)).length,
+    demandesEnCours: demandes.filter(d => ['verification', 'validation_dec', 'validation_bao', 'assignee', 'en_cours'].includes(d.statut)).length,
+    demandesResolues: demandes.filter(d => ['resolue', 'fermee'].includes(d.statut)).length,
+    demandesParCategorie: demandes.reduce((acc, d) => {
+      acc[d.categorie] = (acc[d.categorie] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>),
+    demandesParPriorite: demandes.reduce((acc, d) => {
+      acc[d.priorite] = (acc[d.priorite] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
+  };
+
+  const recentDemandes = demandes.slice(0, 5);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800">Erreur lors du chargement du tableau de bord: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -137,135 +85,136 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total des demandes"
-          value={statistiques.totalDemandes}
+          value={calculatedStats.totalDemandes}
           icon={FileText}
           color="blue"
-          trend={{ value: 12, isPositive: true }}
+          trend={demandes.length > 0 ? { value: 12, isPositive: true } : undefined}
         />
         <StatsCard
           title="En attente"
-          value={statistiques.demandesEnAttente}
+          value={calculatedStats.demandesEnAttente}
           icon={Clock}
           color="yellow"
-          trend={{ value: -5, isPositive: false }}
+          trend={demandes.length > 0 ? { value: -5, isPositive: false } : undefined}
         />
         <StatsCard
           title="En cours"
-          value={statistiques.demandesEnCours}
+          value={calculatedStats.demandesEnCours}
           icon={TrendingUp}
           color="blue"
-          trend={{ value: 8, isPositive: true }}
+          trend={demandes.length > 0 ? { value: 8, isPositive: true } : undefined}
         />
         <StatsCard
           title="Résolues"
-          value={statistiques.demandesResolues}
+          value={calculatedStats.demandesResolues}
           icon={CheckCircle}
           color="green"
-          trend={{ value: 15, isPositive: true }}
+          trend={demandes.length > 0 ? { value: 15, isPositive: true } : undefined}
         />
       </div>
 
       {/* Graphiques et détails */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Répartition par catégorie */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition par catégorie</h3>
-          <div className="space-y-3">
-            {Object.entries(statistiques.demandesParCategorie).map(([categorie, count]) => (
-              <div key={categorie} className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600 capitalize">
-                  {categorie.replace('_', ' ')}
-                </span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-gray-900">{count}</span>
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ 
-                        width: `${(count / statistiques.totalDemandes) * 100}%`,
-                        minWidth: '8px' // Garantit une visibilité même pour les petits pourcentages
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Répartition par priorité */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition par priorité</h3>
-          <div className="space-y-3">
-            {Object.entries(statistiques.demandesParPriorite).map(([priorite, count]) => {
-              const colors = {
-                basse: 'bg-green-500',
-                normale: 'bg-blue-500',
-                haute: 'bg-yellow-500',
-                critique: 'bg-red-500'
-              };
-              
-              return (
-                <div key={priorite} className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600 capitalize">{priorite}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-gray-900">{count}</span>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`${colors[priorite as keyof typeof colors]} h-2 rounded-full`}
-                        style={{ 
-                          width: `${(count / statistiques.totalDemandes) * 100}%`,
-                          minWidth: '8px'
-                        }}
-                      />
+      {Object.keys(calculatedStats.demandesParCategorie).length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Répartition par catégorie */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 dark:bg-slate-900/50 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 dark:text-slate-200">Répartition par catégorie</h3>
+            <div className="space-y-3">
+              {Object.entries(calculatedStats.demandesParCategorie).map(([categorie, count]) => {
+                const numericCount = Number(count);
+                const progressPercent = Math.min(100, Math.max(0, Math.round((numericCount / calculatedStats.totalDemandes) * 10) * 10));
+                
+                return (
+                  <div key={categorie} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600 capitalize dark:text-slate-400">
+                      {categorie.replace('_', ' ')}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-gray-900 dark:text-slate-200">{numericCount}</span>
+                      <div className="w-20 bg-gray-200 rounded-full h-2 dark:bg-slate-700">
+                        <div
+                          className={`bg-blue-600 h-2 rounded-full dark:bg-blue-500 progress-${progressPercent}`}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Répartition par priorité */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 dark:bg-slate-900/50 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 dark:text-slate-200">Répartition par priorité</h3>
+            <div className="space-y-3">
+              {Object.entries(calculatedStats.demandesParPriorite).map(([priorite, count]) => {
+                const numericCount = Number(count);
+                const progressPercent = Math.min(100, Math.max(0, Math.round((numericCount / calculatedStats.totalDemandes) * 10) * 10));
+                const colors = {
+                  basse: 'bg-green-500',
+                  normale: 'bg-blue-500',
+                  haute: 'bg-yellow-500',
+                  critique: 'bg-red-500'
+                };
+                
+                return (
+                  <div key={priorite} className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600 capitalize dark:text-slate-400">{priorite}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-gray-900 dark:text-slate-200">{numericCount}</span>
+                      <div className="w-20 bg-gray-200 rounded-full h-2 dark:bg-slate-700">
+                        <div
+                          className={`${colors[priorite as keyof typeof colors]} h-2 rounded-full progress-${progressPercent}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Demandes récentes */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Demandes récentes</h3>
-          <p className="text-sm text-gray-600 mt-1">Les 5 demandes les plus récentes</p>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-slate-900/50 dark:border-slate-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-200">Demandes récentes</h3>
+          <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">Les {Math.min(5, demandes.length)} demandes les plus récentes</p>
         </div>
         <div className="p-6">
-          {demandesRecentes.length > 0 ? (
+          {recentDemandes.length > 0 ? (
             <div className="space-y-4">
-              {/* {demandesRecentes.map((demande) => (
+              {recentDemandes.map((demande) => (
                 <DemandeCard 
                   key={demande.id} 
                   demande={demande} 
                   compact 
                   onClick={() => console.log('Détail demande:', demande.id)}
                 />
-              ))} */}
+              ))}
             </div>
           ) : (
             <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg font-medium mb-2">Aucune demande récente</p>
-              <p className="text-gray-400 text-sm">Vos demandes apparaitront ici</p>
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4 dark:text-slate-500" />
+              <p className="text-gray-500 text-lg font-medium mb-2 dark:text-slate-400">Aucune demande récente</p>
+              <p className="text-gray-400 text-sm dark:text-slate-500">Vos demandes apparaitront ici</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Quick actions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-4">Actions rapides</h3>
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 dark:bg-blue-900/20 dark:border-blue-700/50">
+        <h3 className="text-lg font-semibold text-blue-900 mb-4 dark:text-blue-300">Actions rapides</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors dark:bg-blue-600 dark:hover:bg-blue-500">
             Nouvelle demande
           </button>
-          <button className="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+          <button className="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors dark:bg-slate-800 dark:text-blue-400 dark:border-blue-500 dark:hover:bg-slate-700">
             Voir toutes les demandes
           </button>
-          <button className="bg-white text-gray-600 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="bg-white text-gray-600 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700">
             Exporter les données
           </button>
         </div>

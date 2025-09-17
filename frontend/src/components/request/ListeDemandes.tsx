@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Search, Eye, Grid, Table, Filter, Download } from 'lucide-react';
 import { DemandeCard } from './DemandeCard';
 import { DemandeDataTable } from './DemandeDataTable';
@@ -15,7 +15,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import {
-  getAppReferenceQueryFn,
   getMyRequestsQueryFn,
   getOrgReferenceQueryFn,
   getRequestsToValidateN1QueryFn
@@ -41,6 +40,7 @@ const statuts = ['DRAFT', 'SUBMITTED', 'EN_COURS', 'RESOLUE', 'FERMEE', 'REJETEE
 const priorites = ['basse', 'normale', 'haute', 'critique'];
 
 // Fonction pour transformer les données de l'API en format Demande
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const transformApiDataToDemande = (apiData: any): Demande => ({
   id: apiData.id,
   reference: apiData.reference,
@@ -53,6 +53,7 @@ const transformApiDataToDemande = (apiData: any): Demande => ({
   dateModification: apiData.updated_at,
   requestor: {
     id: apiData.user_id,
+    name: apiData.user_name || '',
     prenom: apiData.user_name.split(' ')[0] || '',
     nom: apiData.user_name.split(' ').slice(1).join(' ') || '',
     email: apiData.user_email
@@ -78,8 +79,8 @@ export function ListeDemandes({
   statusFilter,
   categoryFilter,
   priorityFilter,
-  ApplicationGroupFilter,
-  ApplicationFilter,
+  // ApplicationGroupFilter,
+  // ApplicationFilter,
   hideFilters = false
 }: ListeDemandesProps) {
   const navigate = useNavigate();
@@ -87,8 +88,8 @@ export function ListeDemandes({
   const [selectedCategorie, setSelectedCategorie] = useState<string>(categoryFilter || 'all');
   const [selectedStatut, setSelectedStatut] = useState<string>(statusFilter || 'all');
   const [selectedPriorite, setSelectedPriorite] = useState<string>(priorityFilter || 'all');
-  const [selectedApplicationGroup, setSelectedApplicationGroup] = useState<string>(ApplicationGroupFilter || 'all');
-  const [selectedApplication, setSelectedApplication] = useState<string>(ApplicationFilter || 'all');
+  // const [selectedApplicationGroup] = useState<string>(ApplicationGroupFilter || 'all');
+  // const [selectedApplication] = useState<string>(ApplicationFilter || 'all');
   const [viewType, setViewType] = useState<ViewType>('table');
 
   // ⚡ Récupération hiérarchie (Région -> Délégation -> Agence)
@@ -100,12 +101,12 @@ export function ListeDemandes({
   });
 
   // ⚡ Récupération hiérarchie (Groupe d'applications -> Applications)
-  const { data: applicationGroups } = useQuery({
-    queryKey: ['application-groups'],
-    queryFn: getAppReferenceQueryFn,
-    select: (res) => res.data?.data,
-    staleTime: Infinity
-  });
+  // const { data: applicationGroups } = useQuery({
+  //   queryKey: ['application-groups'],
+  //   queryFn: getAppReferenceQueryFn,
+  //   select: (res) => res.data?.data,
+  //   staleTime: Infinity
+  // });
 
 
   // Déterminer la fonction de query en fonction du mode
@@ -147,25 +148,25 @@ export function ListeDemandes({
   };
 
   // Reset application quand on change de groupe
-  useEffect(() => {
-    setSelectedApplication("all");
-  }, [selectedApplicationGroup]);
+  // useEffect(() => {
+  //   setSelectedApplication("all");
+  // }, [selectedApplicationGroup]);
 
-  const selectedGroup = applicationGroups?.find(
-    (group: {
-      id: number;
-      name: string;
-      applications: { id: number; name: string }[];
-    }) => group.id.toString() === selectedApplicationGroup
-  );
+  // const selectedGroup = applicationGroups?.find(
+  //   (group: {
+  //     id: number;
+  //     name: string;
+  //     applications: { id: number; name: string }[];
+  //   }) => group.id.toString() === selectedApplicationGroup
+  // );
 
-  const applications = selectedGroup?.applications ?? [];
+  // const applications = selectedGroup?.applications ?? [];
 
 
   // Transformer les données de l'API
   const demandesData = data?.data?.data || [];
   const totalCount = data?.data?.pagination.total || 0;
-  const transformedDemandes = demandesData.map(transformApiDataToDemande);
+  const transformedDemandes = demandesData.map(transformApiDataToDemande) || [];
 
   const hasActiveFilters =
     searchTerm || selectedCategorie !== 'all' || selectedStatut !== 'all' || selectedPriorite !== 'all';
@@ -299,11 +300,11 @@ export function ListeDemandes({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes régions</SelectItem>
-                {regions.map((r: { id: string, name: string }) => (
+                {regions?.map((r: { id: string, name: string }) => (
                   <SelectItem key={r.id} value={r.id}>
                     <span className="capitalize">{r.name}</span>
                   </SelectItem>
-                ))}
+                )) || []}
               </SelectContent>
             </Select>
 
@@ -392,7 +393,7 @@ export function ListeDemandes({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {transformedDemandes.map((demande) => (
+            {transformedDemandes.map((demande: Demande) => (
               <DemandeCard
                 key={demande.id}
                 demande={demande}
