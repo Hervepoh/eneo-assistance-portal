@@ -1,12 +1,11 @@
 import { Router } from "express";
 import { authController } from "./auth.module";
 import { authenticateJWT } from "../../common/strategies/jwt.strategy";
-import { loginLimiter } from "../../middlewares/rateLimiter";
 
 const authRoutes = Router();
 
 authRoutes.post("/register", authController.register);
-authRoutes.post("/login", loginLimiter, authController.login);
+authRoutes.post("/login", authController.login);
 authRoutes.post("/verify/email", authController.verifyEmail);
 authRoutes.post("/password/forgot", authController.forgotPassword);
 authRoutes.post("/password/reset", authController.resetPassword);

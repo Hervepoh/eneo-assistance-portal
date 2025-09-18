@@ -1,25 +1,61 @@
 import rateLimit from "express-rate-limit";
+import { Request, Response, NextFunction } from "express";
 
-// Limite générale : 100 requêtes / 15 minutes par IP
-export const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // chaque IP peut faire max 100 requêtes dans ce laps de temps
-  message: {
-    status: 429,
-    error: "Trop de requêtes. Réessayez plus tard 🚫",
-  },
-  standardHeaders: true, // Ajoute RateLimit-* headers
-  legacyHeaders: false, // Désactive les X-RateLimit-* headers
-});
+// 🔹 Méthode officielle pour gérer les IPs (IPv6 compatible)
+const getClientIp = (req: Request): string => {
+  // Priorité: x-forwarded-for header (pour les proxies)
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(/, /)[0];
+  }
+  
+  // Fallback sur les autres méthodes
+  return req.ip 
+    || req.connection.remoteAddress 
+    || req.socket.remoteAddress 
+    || 'unknown';
+};
 
-// Limite spécifique : 5 tentatives / 10 minutes pour login
-export const loginLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 10, // max 5 tentatives
-  message: {
-    status: 429,
-    error: "Trop de tentatives de connexion. Réessayez plus tard 🚫",
-  },
+// 🔹 Normalise l'IP pour éviter les problèmes IPv6
+const normalizeIp = (ip: string): string => {
+  return ip.replace(/[:.]/g, '_');
+};
+
+// 🔹 Key generators
+const generalKeyGenerator = (req: Request): string => {
+  if (req.user?.id) {
+    return `user-${req.user.id}`;
+  }
+  return `ip-${normalizeIp(getClientIp(req))}`;
+};
+
+const loginKeyGenerator = (req: Request): string => {
+  return `login-${normalizeIp(getClientIp(req))}`;
+};
+
+// 🔹 Limiteurs
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: (req: Request) => req.user?.id ? 5000 : 1000,
+  keyGenerator: generalKeyGenerator,
+  message: "Trop de requêtes. Réessayez plus tard 🚫",
   standardHeaders: true,
-  legacyHeaders: false,
 });
+
+const loginLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  keyGenerator: loginKeyGenerator,
+  message: "Trop de tentatives de connexion. Réessayez plus tard 🚫",
+  standardHeaders: true,
+});
+
+// 🔹 Middleware
+export function rateLimiterMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (req.path.includes("/auth/login")) {
+    return loginLimiter(req, res, next);
+  }
+  return generalLimiter(req, res, next);
+}
+
+export { generalLimiter, loginLimiter };

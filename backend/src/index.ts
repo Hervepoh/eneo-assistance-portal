@@ -7,7 +7,7 @@ import { HTTPSTATUS } from "./config/http.config";
 import connectDatabase from "./database/database";
 import { errorHandler } from "./middlewares/errorHandler";
 import { asyncHandler } from "./middlewares/asyncHandler";
-import { generalLimiter } from "./middlewares/rateLimiter";
+import { rateLimiterMiddleware } from "./middlewares/rateLimiter";
 
 import passport from "./middlewares/passport";
 import { apiV1, apiV2 } from "./versions";
@@ -39,7 +39,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 
 // RateLimiter globale pour toute l’API
-app.use(generalLimiter);
+app.use(rateLimiterMiddleware);
 
 // Healthcheck
 app.get(
