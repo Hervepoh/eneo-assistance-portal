@@ -38,8 +38,20 @@ export class UserController {
   });
 
   public getAll = asyncHandler(async (req: Request, res: Response) => {
-    const users = await this.userService.findAll();
-    res.status(HTTPSTATUS.OK).json({ message: "Users retrieved", users });
+    const { page, limit, filters } = req.query;
+
+    const result = await this.userService.findWithPaginationAndFilters({
+      page: Number(page),
+      limit: Number(limit),
+      filters: filters as string,
+    });
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+
+
   });
 
 

@@ -26,6 +26,9 @@ import CreateUser from "./pages/admin/CreateUser";
 import EditUser from "./pages/admin/EditUser";
 import RolesList from "./pages/admin/RolesList";
 import AdministrationDashboard from "./pages/admin/AdminDashboard";
+import UserDetail from "./pages/admin/UserDetail";
+import PermissionsList from "./pages/admin/PermissionsList";
+import RoleForm from "./pages/admin/RoleForm";
 
 function App() {
   return (
@@ -83,11 +86,11 @@ function App() {
               <Route path="" element={<AdministrationDashboard />} />
               <Route path="users" element={<UsersList />} />
               <Route path="users/new" element={<CreateUser />} />
-              <Route path="users/:id" element={<EditUser />} />
+              <Route path="users/:id" element={<UserDetail />} />
               <Route path="users/:id/edit" element={<EditUser />} />
               <Route path="roles" element={<RolesList />} />
-              {/* <Route path="roles/new" element={<RoleForm />} />
-              <Route path="permissions" element={<PermissionsList />} /> */}
+              <Route path="roles/new" element={<RoleForm />} />
+              <Route path="permissions" element={<PermissionsList />} />
             </Route>
           </Route>
         </Route>

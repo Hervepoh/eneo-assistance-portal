@@ -11,9 +11,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
-  getRoleByIdFn, 
-  createRoleFn, 
-  updateRoleFn, 
+  getRoleByIdQueryFn,
+  createRoleMutationFn, 
+  updateRoleMutationFn, 
   getPermissionsQueryFn 
 } from "@/lib/api";
 import { 
@@ -65,7 +65,7 @@ export default function RoleForm() {
   // Récupération du rôle existant (en édition)
   const { data: existingRole, isLoading: isLoadingRole } = useQuery({
     queryKey: ["role", id],
-    queryFn: () => getRoleByIdFn(parseInt(id!)),
+    queryFn: () => getRoleByIdQueryFn(parseInt(id!)),
     enabled: isEditing,
   });
 
@@ -127,8 +127,8 @@ export default function RoleForm() {
         permissionIds: Array.from(selectedPermissionIds)
       };
       return isEditing 
-        ? updateRoleFn(parseInt(id!), payload)
-        : createRoleFn(payload);
+        ? updateRoleMutationFn(parseInt(id), payload)
+        : createRoleMutationFn(payload);
     },
     onSuccess: () => {
       toast({

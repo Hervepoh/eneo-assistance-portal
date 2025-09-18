@@ -1,8 +1,19 @@
-import { Transaction } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import { PermissionModel, RoleModel, UserModel, UserRoleModel } from "../../database/models";
 import { BadRequestException, NotFoundException } from "../../common/utils/catch-errors";
 import { ErrorCode } from "../../common/enums/error-code.enum";
 import { UserType } from "../../common/types/user.type";
+
+interface Filter {
+  field: string;
+  operator: string;
+  value: any;
+}
+
+interface ParsedFilters {
+  conditions?: { operator: "AND" | "OR"; filters: Filter[] }[];
+  [key: string]: any;
+}
 
 
 export class UserService {
@@ -55,12 +66,96 @@ export class UserService {
     });
   }
 
+
+  public async findWithPaginationAndFilters({
+    page = 1,
+    limit = 10,
+    filters = "",
+  }: { page?: number; limit?: number; filters?: string }) {
+    const offset = (page - 1) * limit;
+
+    // Parse filters JSON
+    let parsedFilters: ParsedFilters = {};
+    try {
+      parsedFilters = filters ? JSON.parse(filters) : {};
+    } catch {
+      throw new Error("Invalid JSON format for filters.");
+    }
+
+    // Helper pour créer les conditions Sequelize
+    const createFilter = ({ field, operator, value }: Filter) => {
+      const opMap: Record<string, any> = {
+        contains: { [Op.like]: `%${value}%` },
+        equals: { [Op.eq]: value },
+        gte: { [Op.gte]: value },
+        lte: { [Op.lte]: value },
+        gt: { [Op.gt]: value },
+        lt: { [Op.lt]: value },
+      };
+      const condition = opMap[operator];
+      if (!condition) throw new Error(`Operator '${operator}' not supported.`);
+      return { [field]: condition };
+    };
+
+    // Construire where clause
+    const whereClause: any[] = [];
+
+    if (Array.isArray(parsedFilters.conditions)) {
+      for (const condition of parsedFilters.conditions) {
+        const condFilters = condition.filters.map(createFilter);
+        whereClause.push(condition.operator === "AND" ? { [Op.and]: condFilters } : { [Op.or]: condFilters });
+      }
+    } else {
+      // simple filters
+      for (const key in parsedFilters) {
+        const { operator = "equals", value } = parsedFilters[key];
+        whereClause.push(createFilter({ field: key, operator, value }));
+      }
+    }
+
+    const finalWhere = whereClause.length ? { [Op.and]: whereClause } : {};
+
+    // Count total items
+    const totalItems = await UserModel.count({ where: finalWhere });
+
+    // Fetch data paginée
+    const data = await UserModel.findAll({
+      where: finalWhere,
+      include: [
+        {
+          model: RoleModel,
+          as: "roles",
+          through: { attributes: [] },
+          attributes: ["id", "name"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
+      attributes: { exclude: ["password"] },
+    });
+
+    return {
+      data,
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+    };
+  }
+
+
+
   async findUserByEmail(email: string) {
     return UserModel.findOne({ where: { email } });
   }
 
   async findUserById(id: number) {
     return UserModel.findByPk(id, {
+      include: [{
+        model: RoleModel,
+        as: 'roles',
+        attributes: ['id', 'name']
+      }],
       attributes: { exclude: ["password"] }, // exclut le mot de passe
     });
   }
@@ -171,3 +266,12 @@ export class UserService {
     });
   }
 }
+
+
+
+
+
+
+
+
+

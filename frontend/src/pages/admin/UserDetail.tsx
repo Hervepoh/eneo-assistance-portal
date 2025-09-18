@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,6 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   getUserByIdQueryFn, 
-  deleteUserFn, 
   toggleUserStatusFn, 
   resetUserPasswordFn,
   getUserAuditLogsFn 
@@ -34,8 +33,7 @@ import {
   Eye,
   MoreHorizontal,
   UserCheck,
-  UserX,
-  Loader2
+  UserX
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -55,6 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 
 interface User {
   id: number;
@@ -121,25 +120,7 @@ export default function UserDetail() {
     select: (res) => res.logs as AuditLog[],
   });
 
-  // Mutation pour supprimer l'utilisateur
-  const deleteUserMutation = useMutation({
-    mutationFn: (id: number) => deleteUserFn(id),
-    onSuccess: () => {
-      toast({
-        title: "Utilisateur supprimé",
-        description: "L'utilisateur a été supprimé avec succès.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      navigate("/admin/users");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Erreur de suppression",
-        description: error.message || "Impossible de supprimer l'utilisateur",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Mutation pour changer le statut
   const toggleStatusMutation = useMutation({
@@ -182,7 +163,7 @@ export default function UserDetail() {
 
   const handleDelete = () => {
     if (!userId) return;
-    deleteUserMutation.mutate(userId);
+    //deleteUserMutation.mutate(userId);
   };
 
   const handleToggleStatus = () => {
@@ -473,7 +454,7 @@ export default function UserDetail() {
                 {logsLoading ? (
                   <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="flex gap-3">
+                      <div key={i++} className="flex gap-3">
                         <Skeleton className="h-4 w-4 rounded-full" />
                         <div className="flex-1">
                           <Skeleton className="h-4 w-3/4 mb-1" />
@@ -529,7 +510,7 @@ export default function UserDetail() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-500">Statut du compte</label>
+                  <Label className="text-sm text-gray-500">Statut du compte</Label>
                   <div className="mt-1">
                     <Badge 
                       variant={user.status === 'inactive' ? 'secondary' : 'default'}
@@ -688,19 +669,20 @@ export default function UserDetail() {
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
-              disabled={deleteUserMutation.isPending}
+              // disabled={deleteUserMutation.isPending}
             >
-              {deleteUserMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Suppression...
-                </>
-              ) : (
+              {
+              // deleteUserMutation.isPending ? (
+              //   <>
+              //     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              //     Suppression...
+              //   </>
+              // ) : (
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Supprimer définitivement
                 </>
-              )}
+              }
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

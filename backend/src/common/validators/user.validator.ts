@@ -8,6 +8,7 @@ export const createUserSchema = z
     password: passwordSchema,
     confirmPassword: passwordSchema,
     isLdap: isLdapSchema.optional(),
+    isActive: z.boolean().optional(),
     phone: z.string().optional(),
     username: z.string().optional(),
     unitId: z.string().optional(),

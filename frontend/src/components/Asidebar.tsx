@@ -17,6 +17,7 @@ import {
   Shield,
   SunIcon,
   User,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,7 @@ const Asidebar = () => {
 
   const { open } = useSidebar();
   const [isOpen, setIsOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false); 
 
   const location = useLocation(); // 👈 récupère le path actuel
 
@@ -91,7 +93,7 @@ const Asidebar = () => {
       url: "/requests/validate/bao",
       icon: CheckCircle,
     },
-     {
+    {
       title: "En cours",
       url: "/requests/in-process",
       icon: Clock,
@@ -101,7 +103,7 @@ const Asidebar = () => {
       url: "/sessions",
       icon: IdCard,
     },
-     {
+    {
       title: "Sécurité",
       url: "/security",
       icon: Lock,
@@ -110,8 +112,19 @@ const Asidebar = () => {
       title: "Administration",
       url: "/admin",
       icon: Shield,
+      children: [
+        {
+          title: "Utilisateurs",
+          url: "/admin/users",
+          icon: User,
+        },
+        {
+          title: "Rôles & permissions",
+          url: "/admin/roles",
+          icon: Users,
+        },
+      ]
     },
-
     {
       title: "Settings",
       url: "#",
@@ -141,7 +154,57 @@ const Asidebar = () => {
                 {items.map((item) => {
                   const isActive =
                     location.pathname === item.url ||
-                    (item.url !== "/home" &&  item.url !== "/request" && location.pathname.startsWith(item.url)); // ✅ comparaison dynamique
+                    (item.url && location.pathname.startsWith(item.url));
+
+                  // Si item a des sous-items
+                  if (item.children && item.children.length > 0) {
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        {/* Titre cliquable vers /admin */}
+                        <SidebarMenuButton
+                          onClick={() => setAdminOpen(!adminOpen)}
+                          className={`flex justify-between items-center w-full px-3 py-2 rounded-lg ${isActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800'}`}
+                        >
+                          <Link
+                            to={item.url}
+                            className="flex items-center space-x-3 w-full"
+                          >
+                            <item.icon className="w-5 h-5" />
+                            <span>{item.title}</span>
+                          </Link>
+                          <span>{adminOpen ? "▾" : "▸"}</span>
+                        </SidebarMenuButton>
+
+                          {/* Sous-menu */}
+                        {adminOpen && (
+                          <div className="ml-6 mt-1 space-y-1">
+                            {item.children.map((child) => {
+                              const isChildActive = location.pathname === child.url;
+                              return (
+                                <SidebarMenuItem key={child.title}>
+                                  <SidebarMenuButton asChild>
+                                    <Link
+                                      to={child.url}
+                                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg ${
+                                        isChildActive
+                                          ? "bg-blue-500 text-white"
+                                          : "text-gray-300 hover:bg-gray-800"
+                                      }`}
+                                    >
+                                      <child.icon className="w-4 h-4" />
+                                      <span>{child.title}</span>
+                                    </Link>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </SidebarMenuItem>
+                    );
+                  }
+
+                  // Item simple
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild>

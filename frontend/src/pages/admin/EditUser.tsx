@@ -16,14 +16,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateUserMutationFn, getUserByIdQueryFn, getRolesQueryFn, resetUserPasswordFn } from "@/lib/api";
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Lock, 
-  Shield, 
-  Save, 
-  Loader2, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Lock,
+  Shield,
+  Save,
+  Loader2,
   AlertCircle,
   Check,
   Eye,
@@ -41,13 +41,13 @@ const editUserSchema = z.object({
     .min(2, "Le nom doit contenir au moins 2 caractères")
     .max(50, "Le nom ne peut pas dépasser 50 caractères")
     .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "Le nom ne peut contenir que des lettres, espaces, apostrophes et tirets"),
-  
+
   email: z
     .string()
     .email("Adresse email invalide")
     .min(1, "L'email est requis")
     .max(100, "L'email ne peut pas dépasser 100 caractères"),
-  
+
   password: z
     .string()
     .optional()
@@ -59,23 +59,25 @@ const editUserSchema = z.object({
       if (!val || val === "") return true;
       return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(val);
     }, "Le mot de passe doit contenir au moins: 1 minuscule, 1 majuscule, 1 chiffre et 1 caractère spécial"),
-  
+
   confirmPassword: z.string().optional(),
-  
+
   roles: z
     .array(z.number())
     .min(1, "Au moins un rôle doit être sélectionné"),
-  
+
   status: z
     .enum(["active", "inactive"], {
       required_error: "Le statut est requis",
     }),
-  
+
   bio: z
     .string()
     .max(500, "La biographie ne peut pas dépasser 500 caractères")
     .optional(),
-  
+
+  isLdap: z.boolean().optional(),
+
 }).refine((data) => {
   if (!data.password && !data.confirmPassword) return true; // Pas de mot de passe = OK
   if (!data.password && data.confirmPassword) return false; // Confirmation sans mot de passe = erreur
@@ -99,7 +101,7 @@ interface User {
   name: string;
   email: string;
   roles: Role[];
-  status: 'active' | 'inactive';
+  isActive: boolean;
   bio?: string;
   createdAt: string;
   updatedAt: string;
@@ -117,16 +119,17 @@ export default function EditUser() {
   const userId = id ? parseInt(id) : null;
 
   // Récupération des données utilisateur
-  const { 
-    data: userData, 
-    isLoading: userLoading, 
-    error: userError 
+  const {
+    data: userData,
+    isLoading: userLoading,
+    error: userError
   } = useQuery({
     queryKey: ["user", userId],
     queryFn: () => getUserByIdQueryFn(userId!),
     enabled: !!userId,
-    select: (res) => res.data as User,
+    select: (res) => res.data?.user as User,
   });
+  console.log("userData", userData)
 
   // Récupération des rôles disponibles
   const { data: roles, isLoading: rolesLoading } = useQuery({
@@ -170,7 +173,7 @@ export default function EditUser() {
         password: "",
         confirmPassword: "",
         roles: userData.roles.map(r => r.id),
-        status: userData.status,
+        status: userData.isActive ? "active" : "inactive",
         bio: userData.bio || "",
       });
     }
@@ -227,7 +230,7 @@ export default function EditUser() {
 
     // Préparer les données à envoyer
     const { confirmPassword, ...submitData } = data;
-    
+
     // Si aucun mot de passe n'est fourni, ne pas l'inclure dans les données
     if (!submitData.password || submitData.password === "") {
       delete submitData.password;
@@ -280,9 +283,9 @@ export default function EditUser() {
         <Alert className="border-red-200">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Erreur lors du chargement de l'utilisateur. 
-            <Button 
-              variant="link" 
+            Erreur lors du chargement de l'utilisateur.
+            <Button
+              variant="link"
               onClick={() => queryClient.refetchQueries({ queryKey: ["user", userId] })}
               className="p-0 ml-2 h-auto"
             >
@@ -295,17 +298,16 @@ export default function EditUser() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate("/admin/users")}
-          className="flex items-center gap-2"
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Retour
-        </Button>
+          <ArrowLeft className="w-4 h-4" />
+          <span>Retour à la liste</span>
+        </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <UserCog className="h-6 w-6" />
@@ -528,7 +530,7 @@ export default function EditUser() {
                             {errors.password.message}
                           </p>
                         )}
-                        
+
                         {/* Critères de validation du mot de passe */}
                         {watchedPassword && (
                           <div className="space-y-1 mt-2">
@@ -635,7 +637,7 @@ export default function EditUser() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {errors.roles && (
                     <p className="text-sm text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
@@ -694,11 +696,11 @@ export default function EditUser() {
                   {userData && (
                     <div className="pt-2 border-t">
                       <p className="text-xs text-gray-600 mb-2">Statut actuel:</p>
-                      <Badge 
-                        variant={userData.status === 'inactive' ? 'secondary' : 'default'}
-                        className={userData.status === 'inactive' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
+                      <Badge
+                        variant={ !userData.isActive ? 'secondary' : 'default'}
+                        className={ !userData.isActive ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'}
                       >
-                        {userData.status === 'inactive' ? 'Inactif' : 'Actif'}
+                        {userData.isActive ?  'Actif' :'Inactif' }
                       </Badge>
                     </div>
                   )}
@@ -719,7 +721,7 @@ export default function EditUser() {
                 >
                   Annuler les modifications
                 </Button>
-                
+
                 <div className="flex gap-2">
                   <Button
                     type="button"

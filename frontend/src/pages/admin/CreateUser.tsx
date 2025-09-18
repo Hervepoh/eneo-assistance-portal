@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,20 +15,21 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUserMutationFn, getRolesQueryFn } from "@/lib/api";
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Lock, 
-  Shield, 
-  Save, 
-  Loader2, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Lock,
+  Shield,
+  Save,
+  Loader2,
   AlertCircle,
   Check,
   Eye,
   EyeOff,
   UserPlus
 } from "lucide-react";
+import { isAxiosError } from "axios";
 
 // Schéma de validation Zod
 const createUserSchema = z.object({
@@ -37,40 +38,41 @@ const createUserSchema = z.object({
     .min(2, "Le nom doit contenir au moins 2 caractères")
     .max(50, "Le nom ne peut pas dépasser 50 caractères")
     .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "Le nom ne peut contenir que des lettres, espaces, apostrophes et tirets"),
-  
+
   email: z
     .string()
     .email("Adresse email invalide")
     .min(1, "L'email est requis")
     .max(100, "L'email ne peut pas dépasser 100 caractères"),
-  
+
   password: z
     .string()
     .min(8, "Le mot de passe doit contenir au moins 8 caractères")
     .max(128, "Le mot de passe ne peut pas dépasser 128 caractères")
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
       "Le mot de passe doit contenir au moins: 1 minuscule, 1 majuscule, 1 chiffre et 1 caractère spécial"),
-  
+
   confirmPassword: z
     .string()
     .min(1, "La confirmation du mot de passe est requise"),
-  
+
   roles: z
     .array(z.number())
     .min(1, "Au moins un rôle doit être sélectionné"),
-  
+
   status: z
     .enum(["active", "inactive"], {
       required_error: "Le statut est requis",
     }),
-  
+
   bio: z
     .string()
     .max(500, "La biographie ne peut pas dépasser 500 caractères")
     .optional(),
-  
+
+  isLdap: z.boolean().optional(),
   sendWelcomeEmail: z.boolean().optional(),
-  
+
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Les mots de passe ne correspondent pas",
   path: ["confirmPassword"],
@@ -117,6 +119,7 @@ export default function CreateUser() {
       roles: [],
       status: "active",
       bio: "",
+      isLdap: true,
       sendWelcomeEmail: true,
     },
     mode: "onChange",
@@ -124,6 +127,8 @@ export default function CreateUser() {
 
   const watchedRoles = watch("roles");
   const watchedPassword = watch("password");
+  const watchedIsLdap = watch("isLdap");
+  const watchedSendWelcomeEmail = watch("sendWelcomeEmail");
 
   // Mutation pour créer l'utilisateur
   const createUserMutation = useMutation({
@@ -131,21 +136,36 @@ export default function CreateUser() {
     onSuccess: (data) => {
       toast({
         title: "Utilisateur créé avec succès",
-        description: `L'utilisateur ${data?.user?.name} a été créé.`,
+        description: `L'utilisateur ${data?.data?.name} a été créé.`,
       });
       queryClient.invalidateQueries({ queryKey: ["users"] });
       navigate("/admin/users");
     },
-    onError: (error: any) => {
-      if (error.field) {
-        setError(error.field as keyof CreateUserForm, {
+    onError: (error: unknown) => {
+      let err: {
+        field?: keyof CreateUserForm;
+        message: string;
+      } = { message: "Erreur inconnue" };
+      if (isAxiosError(error)) {
+        // Si l'erreur provient d'Axios
+        err.message = error.response?.data?.message || error.message;
+      } else if (typeof error === "object" && error !== null && "message" in error) {
+        // Si c'est un objet custom
+        err = error as {
+          field?: keyof CreateUserForm;
+          message: string;
+        }
+      }
+
+      if (err.field) {
+        setError(err.field, {
           type: "server",
-          message: error.message,
+          message: err.message,
         });
       } else {
         toast({
           title: "Erreur de création",
-          description: error.message || "Impossible de créer l'utilisateur",
+          description: err.message || "Impossible de créer l'utilisateur",
           variant: "destructive",
         });
       }
@@ -153,7 +173,12 @@ export default function CreateUser() {
   });
 
   const onSubmit = (data: CreateUserForm) => {
-    createUserMutation.mutate(data);
+    createUserMutation.mutate({
+      ...data,
+      isActive: data.status == "active",
+      roleIds: data.roles, // Map roles → roleIds
+      roles: undefined      // Supprime l'ancienne propriété
+    });
   };
 
   const handleRoleToggle = (roleId: number) => {
@@ -306,14 +331,14 @@ export default function CreateUser() {
                       {errors.password.message}
                     </p>
                   )}
-                  
+
                   {/* Critères de validation du mot de passe */}
                   {watchedPassword && (
                     <div className="space-y-1 mt-2">
                       <p className="text-xs text-gray-600 font-medium">Critères:</p>
                       <div className="grid grid-cols-2 gap-1">
                         {passwordCriteria.map((criterion, index) => (
-                          <div key={index} className="flex items-center gap-1 text-xs">
+                          <div key={index++} className="flex items-center gap-1 text-xs">
                             {criterion.valid ? (
                               <Check className="h-3 w-3 text-green-500" />
                             ) : (
@@ -373,45 +398,54 @@ export default function CreateUser() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {rolesLoading ? (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Chargement des rôles...</span>
-                  </div>
-                ) : roles?.length ? (
-                  <div className="space-y-2">
-                    {roles.map((role) => (
-                      <div key={role.id} className="flex items-start space-x-3">
-                        <Checkbox
-                          id={`role-${role.id}`}
-                          checked={watchedRoles?.includes(role.id) || false}
-                          onCheckedChange={() => handleRoleToggle(role.id)}
-                        />
-                        <div className="grid gap-1.5 leading-none">
-                          <Label
-                            htmlFor={`role-${role.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            {role.name}
-                          </Label>
-                          {role.description && (
-                            <p className="text-xs text-gray-600">
-                              {role.description}
-                            </p>
-                          )}
-                        </div>
+                {(() => {
+                  if (rolesLoading) {
+                    return (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Chargement des rôles...</span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Aucun rôle disponible. Créez d'abord des rôles.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
+                    );
+                  }
+
+                  if (!roles || roles.length === 0) {
+                    return (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Aucun rôle disponible. Créez d'abord des rôles.
+                        </AlertDescription>
+                      </Alert>
+                    );
+                  }
+
+                  // Rôles disponibles
+                  return (
+                    <div className="space-y-2">
+                      {roles.map((role) => (
+                        <div key={role.id} className="flex items-start space-x-3">
+                          <Checkbox
+                            id={`role-${role.id}`}
+                            checked={watchedRoles?.includes(role.id) || false}
+                            onCheckedChange={() => handleRoleToggle(role.id)}
+                          />
+                          <div className="grid gap-1.5 leading-none">
+                            <Label
+                              htmlFor={`role-${role.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {role.name}
+                            </Label>
+                            {role.description && (
+                              <p className="text-xs text-gray-600">{role.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 {errors.roles && (
                   <p className="text-sm text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
@@ -425,7 +459,7 @@ export default function CreateUser() {
                     <p className="text-xs text-gray-600 mb-2">Rôles sélectionnés:</p>
                     <div className="flex flex-wrap gap-1">
                       {watchedRoles.map((roleId) => {
-                        const role = roles?.find(r => r.id === roleId);
+                        const role = roles?.find((r) => r.id === roleId);
                         return role ? (
                           <Badge key={roleId} variant="secondary" className="text-xs">
                             {role.name}
@@ -436,6 +470,7 @@ export default function CreateUser() {
                   </div>
                 )}
               </CardContent>
+
             </Card>
 
             {/* Statut */}
@@ -468,10 +503,26 @@ export default function CreateUser() {
 
                 {/* Options supplémentaires */}
                 <div className="space-y-3 pt-2 border-t">
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                      id="isLdap"
+                      // {...register("isLdap")}
+                      checked={watchedIsLdap}
+                      onCheckedChange={(checked) => setValue("isLdap", !!checked)}
+                    />
+                    <Label
+                      htmlFor="isLdap"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Se connecter avec Active Directory (LDAP)
+                    </Label>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="sendWelcomeEmail"
-                      {...register("sendWelcomeEmail")}
+                      //{...register("sendWelcomeEmail")}
+                      checked={watchedSendWelcomeEmail}
+                      onCheckedChange={(checked) => setValue("sendWelcomeEmail", !!checked)}
                     />
                     <Label
                       htmlFor="sendWelcomeEmail"
@@ -498,7 +549,7 @@ export default function CreateUser() {
               >
                 Réinitialiser
               </Button>
-              
+
               <div className="flex gap-2">
                 <Button
                   type="button"
