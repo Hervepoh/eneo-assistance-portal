@@ -14,24 +14,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CircleCheckBigIcon, Download, Eye, Loader2, RotateCcw, Send } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { CircleCheckBigIcon, Download, Eye, Loader2, RotateCcw, Send, Upload, FileText, X } from "lucide-react";
 import Papa from "papaparse";
 import { Demande, ModeType } from "../../types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rejectAssistanceMutationFn, submitAssistanceMutationFn, validateAssistanceMutationFn } from "@/lib/api";
+import { rejectAssistanceMutationFn, submitAssistanceMutationFn, validateAssistanceMutationFn, verifyAssistanceMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { assistanceQueryKey } from "@/queries";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
 
 type Props = Readonly<{
   demandes: Demande[];
   onDemandeClick: (id: string) => void;
   mode: ModeType
 }>;
+
+type VerificationAction = 
+  | "SEND_TO_PROCESS"        // Envoyer directement en traitement
+  | "SEND_TO_DEC"            // Envoyer en validation DEC
+  | "SEND_TO_BAO"            // Envoyer en validation BAO  
+  | "SEND_TO_DEC_BAO"        // Envoyer en validation DEC & BAO
+  | "RETURN_TO_USER";        // Renvoyer à l'utilisateur pour modification
 
 const columnHelper = createColumnHelper<Demande>();
 
@@ -41,7 +50,13 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
   const [pageSize, setPageSize] = useState(10);
   const [validateDialogOpen, setValidateDialogOpen] = useState<number | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState<number | null>(null);
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  
+  // États pour la vérification
+  const [verificationAction, setVerificationAction] = useState<VerificationAction>("SEND_TO_PROCESS");
+  const [modificationComment, setModificationComment] = useState("");
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -49,7 +64,6 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
   const { mutate: submitAssistance, isPending } = useMutation({
     mutationFn: submitAssistanceMutationFn,
     onSuccess: () => {
-      // Invalider la query 'requests' sans les filtres
       queryClient.invalidateQueries({ queryKey: [assistanceQueryKey] });
       toast({
         title: 'Succès',
@@ -89,6 +103,34 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     }
   });
 
+  // ⚡ Mutation pour vérifier la demande (nouveau)
+  const { mutate: verifyAssistance, isPending: isVerifying } = useMutation({
+    mutationFn: ({ id, action, comment, file }: { 
+      id: number; 
+      action: VerificationAction; 
+      comment?: string; 
+      file?: File;
+    }) => verifyAssistanceMutationFn(id, { action, comment, file }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [assistanceQueryKey] });
+      toast({
+        title: 'Succès',
+        description: 'La vérification a été effectuée avec succès.',
+        variant: 'default',
+      });
+      resetVerificationForm();
+      setVerifyDialogOpen(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de la vérification.',
+        variant: 'destructive',
+      });
+      console.error('Erreur lors de la vérification:', error);
+    }
+  });
+
   // ⚡ Mutation pour rejeter la demande
   const { mutate: rejectAssistance, isPending: isRejecting } = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) =>
@@ -113,7 +155,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     }
   });
 
-  const handleSubmit =  useCallback((id: number) => {
+  const handleSubmit = useCallback((id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')) {
       submitAssistance(id);
     }
@@ -122,6 +164,25 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
   const handleValidate = useCallback((id: number) => {
     validateAssistance(id);
   }, [validateAssistance]);
+
+  const handleVerify = useCallback((id: number) => {
+    // Validation selon l'action choisie
+    if (verificationAction === "RETURN_TO_USER" && !modificationComment.trim()) {
+      toast({
+        title: 'Commentaire requis',
+        description: 'Veuillez saisir un commentaire pour les modifications requises.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    verifyAssistance({
+      id,
+      action: verificationAction,
+      comment: verificationAction === "RETURN_TO_USER" ? modificationComment : undefined,
+      file: attachedFile || undefined
+    });
+  }, [verificationAction, modificationComment, attachedFile, verifyAssistance]);
 
   const handleReject = useCallback((id: number) => {
     if (!rejectReason.trim()) {
@@ -133,7 +194,56 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
       return;
     }
     rejectAssistance({ id, reason: rejectReason });
-  }, [rejectReason,rejectAssistance]);
+  }, [rejectReason, rejectAssistance]);
+
+  const resetVerificationForm = () => {
+    setVerificationAction("SEND_TO_PROCESS");
+    setModificationComment("");
+    setAttachedFile(null);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Vérification du type de fichier (optionnel)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: 'Type de fichier non autorisé',
+          description: 'Seuls les fichiers PDF, Word et images sont autorisés.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Vérification de la taille (optionnel, ex: 5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Fichier trop volumineux',
+          description: 'La taille du fichier ne doit pas dépasser 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      setAttachedFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setAttachedFile(null);
+  };
+
+  const getActionLabel = (action: VerificationAction) => {
+    switch (action) {
+      case "SEND_TO_PROCESS": return "Envoyer directement en traitement";
+      case "SEND_TO_DEC": return "Envoyer en validation DEC";
+      case "SEND_TO_BAO": return "Envoyer en validation BAO";
+      case "SEND_TO_DEC_BAO": return "Envoyer en validation DEC & BAO";
+      case "RETURN_TO_USER": return "Renvoyer à l'utilisateur pour modification";
+      default: return action;
+    }
+  };
 
   const TitreCell = ({ value }: { value: string }) => {
     return <div className="font-medium">{value}</div>;
@@ -192,8 +302,9 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
                       <Button
                         size="sm"
                         variant="default"
+                        className="bg-green-600 hover:bg-green-500"
                         disabled={isValidating}
-                        title="Valider" // Tooltip natif HTML
+                        title="Valider"
                       >
                         <CircleCheckBigIcon className="w-4 h-4" />
                       </Button>
@@ -229,11 +340,12 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <TooltipContent className="bg-blue-500 text-white">
+                <TooltipContent className="bg-green-500 text-white">
                   <p>Valider</p>
                 </TooltipContent>
               </Tooltip>
             }
+            
             {mode == "as-n1" &&
               <Tooltip>
                 <AlertDialog
@@ -241,7 +353,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
                   onOpenChange={(open) => {
                     setRejectDialogOpen(open ? row.original.id : null);
                     if (!open) {
-                      setRejectReason(""); // Reset le motif quand on ferme
+                      setRejectReason("");
                     }
                   }}
                 >
@@ -311,6 +423,263 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
                 </TooltipContent>
               </Tooltip>
             }
+
+            {/* Modal de vérification complexe */}
+            {mode == "as-verif" &&
+              <Tooltip>
+                <Dialog
+                  open={verifyDialogOpen === row.original.id}
+                  onOpenChange={(open) => {
+                    setVerifyDialogOpen(open ? row.original.id : null);
+                    if (!open) {
+                      resetVerificationForm();
+                    }
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={isVerifying}
+                        title="Vérifier"
+                      >
+                        <CircleCheckBigIcon className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Vérification de la demande</DialogTitle>
+                      <DialogDescription>
+                        Demande <strong>{row.original.reference}</strong> - Choisissez l'action à effectuer
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-6 py-4">
+                      {/* Choix de l'action */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Action à effectuer *</Label>
+                        <RadioGroup 
+                          value={verificationAction} 
+                          onValueChange={(value) => setVerificationAction(value as VerificationAction)}
+                          className="space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="SEND_TO_PROCESS" id="process" />
+                            <Label htmlFor="process" className="cursor-pointer">
+                              Envoyer directement en traitement
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="SEND_TO_DEC" id="dec" />
+                            <Label htmlFor="dec" className="cursor-pointer">
+                              Envoyer en validation DEC
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="SEND_TO_BAO" id="bao" />
+                            <Label htmlFor="bao" className="cursor-pointer">
+                              Envoyer en validation BAO
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="SEND_TO_DEC_BAO" id="dec-bao" />
+                            <Label htmlFor="dec-bao" className="cursor-pointer">
+                              Envoyer en validation DEC & BAO
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="RETURN_TO_USER" id="return" />
+                            <Label htmlFor="return" className="cursor-pointer text-orange-700">
+                              Renvoyer à l'utilisateur pour modification
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Commentaire pour modification (si RETURN_TO_USER) */}
+                      {verificationAction === "RETURN_TO_USER" && (
+                        <div className="space-y-2 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                          <Label htmlFor="modification-comment" className="text-sm font-medium text-orange-800">
+                            Commentaire pour l'utilisateur *
+                          </Label>
+                          <Textarea
+                            id="modification-comment"
+                            placeholder="Décrivez clairement les modifications à apporter..."
+                            value={modificationComment}
+                            onChange={(e) => setModificationComment(e.target.value)}
+                            rows={4}
+                            className="resize-none border-orange-300 focus:border-orange-500"
+                          />
+                          {modificationComment.length > 0 && (
+                            <p className="text-xs text-orange-600">
+                              {modificationComment.length} caractères
+                            </p>
+                          )}
+                          
+                          {/* Upload de fichier */}
+                          <div className="space-y-2 mt-4">
+                            <Label className="text-sm font-medium text-orange-800">
+                              Fichier joint (optionnel)
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                onChange={handleFileUpload}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                className="hidden"
+                                id={`file-upload-${row.original.id}`}
+                              />
+                              <Label 
+                                htmlFor={`file-upload-${row.original.id}`}
+                                className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-orange-300 rounded-md hover:bg-orange-100 text-sm"
+                              >
+                                <Upload className="w-4 h-4" />
+                                Joindre un fichier
+                              </Label>
+                              {attachedFile && (
+                                <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                                  <FileText className="w-4 h-4" />
+                                  <span className="truncate max-w-[200px]">{attachedFile.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={removeFile}
+                                    className="h-auto p-0 text-orange-600 hover:text-orange-800"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs text-orange-600">
+                              Formats acceptés: PDF, Word, JPG, PNG (max 5MB)
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Résumé de l'action */}
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Action sélectionnée:</strong> {getActionLabel(verificationAction)}
+                        </p>
+                        {verificationAction === "RETURN_TO_USER" && modificationComment && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            Commentaire: {modificationComment.substring(0, 100)}
+                            {modificationComment.length > 100 && "..."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setVerifyDialogOpen(null)}>
+                        Annuler
+                      </Button>
+                      <Button
+                        onClick={() => handleVerify(row.original.id)}
+                        disabled={isVerifying || (verificationAction === "RETURN_TO_USER" && !modificationComment.trim())}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {isVerifying ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Traitement...
+                          </>
+                        ) : (
+                          'Confirmer la vérification'
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <TooltipContent className="bg-blue-500 text-white">
+                  <p>Vérifier</p>
+                </TooltipContent>
+              </Tooltip>
+            }
+
+            {mode == "as-verif" &&
+              <Tooltip>
+                <AlertDialog
+                  open={rejectDialogOpen === row.original.id}
+                  onOpenChange={(open) => {
+                    setRejectDialogOpen(open ? row.original.id : null);
+                    if (!open) {
+                      setRejectReason("");
+                    }
+                  }}
+                >
+                  <AlertDialogTrigger asChild>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={isRejecting}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-lg">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Rejeter la demande</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Vous êtes sur le point de rejeter la demande <strong>{row.original.reference}</strong>.
+                        <br />
+                        <span className="text-sm text-gray-600 mt-2 block">
+                          Veuillez obligatoirement saisir le motif du rejet.
+                        </span>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2 py-4">
+                      <Label htmlFor="reject-reason" className="text-sm font-medium">
+                        Motif du rejet *
+                      </Label>
+                      <Textarea
+                        id="reject-reason"
+                        placeholder="Expliquez clairement les raisons du rejet..."
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        rows={4}
+                        className="resize-none"
+                      />
+                      {rejectReason.length > 0 && (
+                        <p className="text-xs text-gray-500">
+                          {rejectReason.length} caractères
+                        </p>
+                      )}
+                    </div>
+
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleReject(row.original.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                        disabled={isRejecting || !rejectReason.trim()}
+                      >
+                        {isRejecting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Rejet...
+                          </>
+                        ) : (
+                          'Confirmer le rejet'
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <TooltipContent className="bg-red-500 text-white">
+                  <p>Rejeter</p>
+                </TooltipContent>
+              </Tooltip>
+            }
+
             <Tooltip>
               <TooltipTrigger>
                 <Button size="sm" variant="outline" onClick={() => onDemandeClick(row.original.reference)}>
@@ -339,16 +708,11 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
                 </TooltipContent>
               </Tooltip>
             }
-
-            {/* { false && <Button size="sm" variant="ghost" onClick={() => downloadRowCsv(row.original)}>
-              <Download className="w-4 h-4" />
-            </Button> 
-            } */}
           </div>
         )
       })
     ],
-    [onDemandeClick, handleValidate, handleReject, handleSubmit, isPending, isRejecting, isValidating, mode, rejectDialogOpen, validateDialogOpen]
+    [onDemandeClick, handleValidate, handleReject, handleSubmit, handleVerify, isPending, isRejecting, isValidating, isVerifying, mode, rejectDialogOpen, validateDialogOpen, verifyDialogOpen]
   );
 
   // Client-side global filter (simple)
@@ -372,8 +736,6 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
-
-
 
   // Export all filtered rows to CSV
   function exportCsv() {

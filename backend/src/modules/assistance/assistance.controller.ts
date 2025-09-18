@@ -130,8 +130,22 @@ export class AssistanceController {
     if (!actorId) return res.status(401).json({ message: "Unauthorized" });
 
     const { type, description, comment } = req.body;
+
+    // Informations du fichier uploadé (si présent)
+    const file = req.file;
+    const attachmentPath = file ? file.path : undefined;
+    const attachmentName = file ? file.originalname : undefined;
+
+     console.log("type, description, comment",type, description, comment)
     try {
-      const result = await assistanceService.performAction(id, { type, description, comment, actorId });
+      const result = await assistanceService.performAction(id, {
+        type,
+        description,
+        comment,
+        actorId,
+        attachmentPath,
+        attachmentName
+      });
       return res.status(200).json({ request: result });
     } catch (err: any) {
       return res.status(400).json({ error: err.message });

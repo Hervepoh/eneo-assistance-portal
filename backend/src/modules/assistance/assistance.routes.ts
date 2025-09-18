@@ -60,6 +60,7 @@ assistanceRoutes.post("/:id/files",
 // generic action endpoint (verifier / delegue / business / traiteur)
 assistanceRoutes.post("/:id/action", 
   authenticateJWT, 
+  upload.single('attachment'), 
   assistanceController.action
 );
 

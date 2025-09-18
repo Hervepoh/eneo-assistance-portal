@@ -4,7 +4,7 @@ const RequestToDec = () => {
   return (
     <ListeDemandes
       title="Demandes à valider (DEC)"
-      mode="all"
+      mode="as-dec"
       statusFilter="PENDING_DELEGUE"
       hideFilters={true}
     />

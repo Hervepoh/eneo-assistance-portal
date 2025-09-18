@@ -9,7 +9,8 @@ import {
   SessionResponseType,
   forgotPasswordType,
   verifyEmailType,
-  verifyMFAType
+  verifyMFAType,
+  VerificationAction
 } from "@/types";
 
 
@@ -106,33 +107,180 @@ export const rejectAssistanceMutationFn = async (id: number, reason: string) => 
   return res.data;
 };
 
+// export const verifyAssistanceMutationFn = async (
+//   id: number, 
+//   params: { action: VerificationAction; comment?: string }
+// ) => {
+//   const { action, comment } = params;
+  
+//   // Mappage des actions frontend vers backend
+//   const actionMapping = {
+//     "SEND_TO_PROCESS": "VALIDATE_TO_PROCESS",
+//     "SEND_TO_DEC": "SEND_TO_DELEGUE", 
+//     "SEND_TO_BAO": "SEND_TO_BUSINESS",
+//     "SEND_TO_DEC_BAO": "SEND_TO_BOTH",
+//     "RETURN_TO_USER": "RETURN_TO_REQUESTER"
+//   };
+
+//   // Descriptions pour chaque action
+//   const actionDescriptions = {
+//     "SEND_TO_PROCESS": "Demande vérifiée et envoyée directement en traitement",
+//     "SEND_TO_DEC": "Demande vérifiée et envoyée en validation DEC",
+//     "SEND_TO_BAO": "Demande vérifiée et envoyée en validation BAO", 
+//     "SEND_TO_DEC_BAO": "Demande vérifiée et envoyée en validation DEC & BAO",
+//     "RETURN_TO_USER": "Demande renvoyée à l'utilisateur pour modification"
+//   };
+
+//   const res = await API.post(`/assistance/${id}/action`, {
+//     type: actionMapping[action],
+//     description: actionDescriptions[action],
+//     comment: comment || ""
+//   },  headers: {
+//       "Content-Type": "multipart/form-data",
+//     },);
+  
+//   return res.data;
+// };
+
+
+// Fonction API à ajouter dans @/lib/api.ts
+
+export const verifyAssistanceMutationFn = async (
+  id: number, 
+  params: { action: VerificationAction; comment?: string; file?: File }
+) => {
+  const { action, comment, file } = params;
+   console.log("action",action)
+  // Mappage des actions frontend vers backend
+  const actionMapping = {
+    "SEND_TO_PROCESS": "VALIDATE_TO_PROCESS",
+    "SEND_TO_DEC": "SEND_TO_DELEGUE", 
+    "SEND_TO_BAO": "SEND_TO_BUSINESS",
+    "SEND_TO_DEC_BAO": "SEND_TO_BOTH",
+    "RETURN_TO_USER": "RETURN_TO_REQUESTER"
+  };
+
+  // Descriptions pour chaque action
+  const actionDescriptions = {
+    "SEND_TO_PROCESS": "Demande vérifiée et envoyée directement en traitement",
+    "SEND_TO_DEC": "Demande vérifiée et envoyée en validation DEC",
+    "SEND_TO_BAO": "Demande vérifiée et envoyée en validation BAO", 
+    "SEND_TO_DEC_BAO": "Demande vérifiée et envoyée en validation DEC & BAO",
+    "RETURN_TO_USER": "Demande renvoyée à l'utilisateur pour modification"
+  };
+
+  // Créer FormData pour supporter l'upload de fichier
+  const formData = new FormData();
+  formData.append('type', actionMapping[action]);
+  formData.append('description', actionDescriptions[action]);
+  
+  if (comment) {
+    formData.append('comment', comment);
+  }
+  
+  if (file) {
+    formData.append('attachment', file);
+  }
+console.log("verifyAssistanceMutationFn formData",formData)
+  const response = await API.post(`/assistance/${id}/action`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+   
+  return response.data;
+};
+
+// Fonction pour télécharger un fichier joint de l'historique
+export const downloadAttachmentFn = async (historyId: number) => {
+  const response = await API.get(`/assistance/history/${historyId}/attachment`, {
+    responseType: 'blob',
+  });
+  
+  // Créer un lien de téléchargement
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  
+  // Essayer de récupérer le nom du fichier depuis les headers
+  const disposition = response.headers['content-disposition'];
+  let filename = 'fichier';
+  if (disposition && disposition.indexOf('filename=') !== -1) {
+    filename = disposition.split('filename=')[1].replace(/"/g, '');
+  }
+  
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 
 export const actionAssistanceMutationFn = async (id: string, data: any) =>
   await API.post(`/assistance/${id}/action`, data);
 
 // USERS
 // GET users
-export const getUsersQueryFn = async ({ q, limit, page }: any) => {
-  const res = await API.get("/user", {
-    params: { q, limit, page },
-  });
-  return res.data; 
+// export const getUsersQueryFn = async ({ q, limit, page }: any) => {
+//   const res = await API.get("/user", {
+//     params: { q, limit, page },
+//   });
+//   return res.data; 
+// };
+// types pour les filtres
+export interface Filter {
+  field: string;
+  operator: 'contains' | 'equals' | 'gte' | 'lte' | 'gt' | 'lt';
+  value: any;
+}
+
+export interface ComplexFilters {
+  conditions?: {
+    operator: 'AND' | 'OR';
+    filters: Filter[];
+  }[];
+  [key: string]: { operator: string; value: any } | any;
+}
+
+// GET users avec pagination + filtres complexes
+export const getUsersQueryFn = async ({
+  page = 1,
+  limit = 10,
+  filters,
+}: {
+  page?: number;
+  limit?: number;
+  filters?: ComplexFilters;
+}) => {
+  const params: Record<string, any> = {
+    page,
+    limit,
+  };
+
+  if (filters) {
+    // stringify JSON pour l'envoyer en query param
+    params.filters = JSON.stringify(filters);
+  }
+
+  const res = await API.get("/user", { params });
+  return res.data;
 };
 
 // DELETE user
-export const deleteUserFn = async (id: number) => {
-  const res = await API.delete(`/api/users/${id}`);
+export const deleteUserMutationFn = async (id: number) => {
+  const res = await API.delete(`/user/${id}`);
   return res.data; 
 };
 
 export const getUserByIdQueryFn = async (id: string | number) =>
-  await API.get(`/users/${id}`);
+  await API.get(`/user/${id}`);
 
 export const createUserMutationFn = async (payload: any) =>
   await API.post(`/user`, payload);
 
 export const updateUserMutationFn = async (id: string | number, payload: any) =>
-  await API.put(`/users/${id}`, payload);
+  await API.put(`/user/${id}`, payload);
 
 
 /**
@@ -142,8 +290,6 @@ export const resetUserPasswordFn = async (id: number) => {
   return API.post(`/users/${id}/reset-password`, {});
 };
 
-export const deleteUserMutationFn = async (id: string | number) =>
-  await API.delete(`/users/${id}`);
 
 
 /**

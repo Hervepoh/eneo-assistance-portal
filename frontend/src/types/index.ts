@@ -1,10 +1,17 @@
-export type ModeType = 'my' | 'as-n1' | 'all'
+export type ModeType = 'my' | 'as-n1' | 'as-verif' | 'as-dec'  | 'as-bao' | 'as-treat' | 'all'
 export type ID = string | number;
 export type PrioriteType = "basse" | "normale" | "haute" | "critique"
 
 
 export type loginType = { email: string; password: string };
+export type VerificationAction = 
+  | "SEND_TO_PROCESS"        // Envoyer directement en traitement
+  | "SEND_TO_DEC"            // Envoyer en validation DEC
+  | "SEND_TO_BAO"            // Envoyer en validation BAO  
+  | "SEND_TO_DEC_BAO"        // Envoyer en validation DEC & BAO
+  | "RETURN_TO_USER";        // Renvoyer à l'utilisateur pour modification
 
+  
 export type registerType = {
   name: string;
   email: string;
@@ -36,8 +43,6 @@ export type mfaType = {
   secret: string;
   qrImageUrl: string;
 };
-
-
 
 
 // Types pour la structures organisationnelles (Agence -> Délégation -> région)

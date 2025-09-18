@@ -95,17 +95,17 @@ export class AssistanceService {
 
   async submit(id: ID, userId: ID) {
     const request = await AssistanceRequestModel.findByPk(id);
-    if (!request) 
+    if (!request)
       throw new Error("Request not found");
 
     // ✅ Vérification que le user est bien le propriétaire
-    if (request.userId !== userId) 
+    if (request.userId !== userId)
       throw new Error("You are not allowed to submit this request");
-    
+
     // éviter que quelqu’un "resoumette" une demande déjà traitée
-    if (request.status !== AssistanceStatusEnum.DRAFT) 
+    if (request.status !== AssistanceStatusEnum.DRAFT)
       throw new Error("Only draft requests can be submitted");
-    
+
     await request.update({ status: AssistanceStatusEnum.SUBMITTED });
     return request;
   }
@@ -285,6 +285,7 @@ export class AssistanceService {
     id: number,
     action: {
       type:
+      | "SEND_MODIFIED_TO_VERIFICATION"
       | "SEND_TO_VERIFICATION"
       | "SEND_TO_DELEGUE"
       | "SEND_TO_BUSINESS"
@@ -298,19 +299,21 @@ export class AssistanceService {
       description?: string;
       comment?: string;
       actorId: number;
+      attachmentPath?: string; // Nouveau champ pour le fichier
+      attachmentName?: string; // Nouveau champ pour le nom du fichier
     }
   ) {
     const request = await AssistanceRequestModel.findByPk(id);
     if (!request) throw new Error("Request not found");
 
-    const { type, description, comment, actorId } = action;
+    const { type, description, comment, actorId, attachmentPath, attachmentName } = action;
     let newStatus: AssistanceStatusEnum;
 
     switch (type) {
       case "REJECT":
         newStatus = AssistanceStatusEnum.REJECT;
         break;
-       case "SEND_TO_VERIFICATION":
+      case "SEND_TO_VERIFICATION":
         newStatus = AssistanceStatusEnum.UNDER_VERIFICATION;
         break;
       case "SEND_TO_DELEGUE":
@@ -324,6 +327,9 @@ export class AssistanceService {
         break;
       case "RETURN_TO_REQUESTER":
         newStatus = AssistanceStatusEnum.TO_MODIFY;
+        break;
+      case "SEND_MODIFIED_TO_VERIFICATION":
+        newStatus = AssistanceStatusEnum.UNDER_VERIFICATION;
         break;
       case "VALIDATE_TO_PROCESS":
         newStatus = AssistanceStatusEnum.TO_PROCESS;
@@ -365,6 +371,8 @@ export class AssistanceService {
       userId: actorId,
       action: description ?? "",
       comment: comment ?? "",
+      // attachmentPath: attachmentPath, // Nouveau champ
+      // attachmentName: attachmentName, // Nouveau champ
     });
 
     return request;

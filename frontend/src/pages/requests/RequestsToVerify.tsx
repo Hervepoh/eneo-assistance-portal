@@ -4,7 +4,7 @@ const RequestToVerify = () => {
   return (
     <ListeDemandes
       title="Demandes à vérifier"
-      mode="all"
+      mode="as-verif"
       statusFilter="UNDER_VERIFICATION"
       hideFilters={true}
     />
