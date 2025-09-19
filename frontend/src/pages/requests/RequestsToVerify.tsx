@@ -47,10 +47,10 @@ const RequestToVerify = ({
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-slate-800 rounded"></div>
           ))}
         </div>
       </div>
@@ -59,8 +59,8 @@ const RequestToVerify = ({
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Erreur lors du chargement: {error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-800 dark:text-red-200">Erreur lors du chargement: {error}</p>
       </div>
     );
   }
@@ -70,12 +70,12 @@ const RequestToVerify = ({
       {/* En-tête avec informations de rôle */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vérification des demandes</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Vérification des demandes</h1>
+          <p className="text-gray-600 dark:text-slate-400 mt-1">
             Demandes en attente de vérification - Rôle: Vérificateur
           </p>
         </div>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">
           <CheckCircle className="w-4 h-4 mr-1" />
           Vérificateur
         </Badge>
@@ -129,7 +129,7 @@ const RequestToVerify = ({
       </div>
 
       {/* Instructions pour le vérificateur */}
-      <Card className="bg-blue-50 border-blue-200">
+      {/* <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
           <CardTitle className="text-blue-900 flex items-center">
             <CheckCircle className="w-5 h-5 mr-2" />
@@ -142,7 +142,7 @@ const RequestToVerify = ({
           <p>• Validez les pièces jointes si nécessaires</p>
           <p>• Approuvez pour passer à l'étape suivante ou demandez des modifications</p>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Alerte si beaucoup de demandes en attente */}
       {verificationStats.total > 10 && (

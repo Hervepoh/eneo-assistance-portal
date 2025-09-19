@@ -72,7 +72,7 @@ export default function Login() {
           <h1 className="text-2xl tracking-[-0.16px] dark:text-[#fcfdffef] font-bold mb-1.5 mt-8 text-center">
             Demandes d'Assistance
           </h1>
-          <p className="text-gray-600 mt-2">Connectez-vous à votre compte</p>
+          <p className="text-gray-600 dark:text-slate-400 mt-2">Connectez-vous à votre compte</p>
         </div>
 
         <Form {...form}>
@@ -142,10 +142,10 @@ export default function Login() {
               />
             </div>
 
-            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-gray-900 mb-2">Information :</h3>
-              <p className="text-sm text-gray-600 mb-2">Pour vous connecter veuillez utiliser votre compte Active directory.Example</p>
-              <div className="text-sm text-gray-600 space-y-1">
+            <div className="mt-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <h3 className="font-medium text-gray-900 dark:text-slate-100 mb-2">Information :</h3>
+              <p className="text-sm text-gray-600 dark:text-slate-400 mb-2">Pour vous connecter veuillez utiliser votre compte Active directory.Example</p>
+              <div className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
                 <p><strong>Utilisateur:</strong> herve.ngando@camlight.cm</p>
                 <p className="mt-2"><strong>Mot de passe:</strong> Votre mot de passe Outlook</p>
               </div>

@@ -60,10 +60,10 @@ const RequestToBao = ({
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            <div key={i} className="h-24 bg-gray-200 dark:bg-slate-800 rounded"></div>
           ))}
         </div>
       </div>
@@ -72,8 +72,8 @@ const RequestToBao = ({
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Erreur lors du chargement: {error}</p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-800 dark:text-red-200">Erreur lors du chargement: {error}</p>
       </div>
     );
   }
@@ -83,12 +83,12 @@ const RequestToBao = ({
       {/* En-tête avec informations de rôle */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Validation Business Owner (BAO)</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Validation Business Owner (BAO)</h1>
+          <p className="text-gray-600 dark:text-slate-400 mt-1">
             Demandes approuvées par le DEC, validation finale avant traitement
           </p>
         </div>
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+        <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700">
           <Crown className="w-4 h-4 mr-1" />
           Business Owner (BAO)
         </Badge>
@@ -142,7 +142,7 @@ const RequestToBao = ({
       </div>
 
       {/* Instructions pour le BAO */}
-      <Card className="bg-yellow-50 border-yellow-200">
+      {/* <Card className="bg-yellow-50 border-yellow-200">
         <CardHeader>
           <CardTitle className="text-yellow-900 flex items-center">
             <Crown className="w-5 h-5 mr-2" />
@@ -155,7 +155,7 @@ const RequestToBao = ({
           <p>• Valider l'allocation des ressources et budget</p>
           <p>• Donner l'approbation finale pour le traitement</p>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Indicateurs de performance */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

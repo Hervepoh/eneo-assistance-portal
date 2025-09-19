@@ -166,11 +166,11 @@ export function NouvelleDemande() {
   return (
     <main className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Nouvelle demande d'assistance</h2>
-        <p className="text-gray-600 mt-1">Décrivez votre problème ou votre besoin d'assistance</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nouvelle demande d'assistance</h2>
+        <p className="text-gray-600 dark:text-gray-300 mt-1">Décrivez votre problème ou votre besoin d'assistance</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
@@ -186,7 +186,7 @@ export function NouvelleDemande() {
                       <select
                         {...field}
                         disabled={isLoadingOrgRef}
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="">-- Région --</option>
                         {regions?.map((r: Region) => (
@@ -211,7 +211,7 @@ export function NouvelleDemande() {
                       <select
                         {...field}
                         disabled={!selectedRegion}
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="">-- Délégation --</option>
                         {delegations.map((d: Delegation) => (
@@ -236,7 +236,7 @@ export function NouvelleDemande() {
                       <select
                         {...field}
                         disabled={!selectedDelegation}
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="">-- Agence --</option>
                         {agences.map((a: Agence) => (
@@ -266,7 +266,7 @@ export function NouvelleDemande() {
                       <select
                         {...field}
                         disabled={isLoadingAppRef}
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                         onChange={(e) => {
                           field.onChange(e);
                           form.setValue("application", ""); // Réinitialiser l'application quand le groupe change
@@ -295,7 +295,7 @@ export function NouvelleDemande() {
                       <select
                         {...field}
                         disabled={!selectedApplicationGroup}
-                        className="w-full border rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                       >
                         <option value="">-- Application --</option>
                         {applications.map((app: Application) => (
@@ -359,7 +359,7 @@ export function NouvelleDemande() {
                   <FormControl>
                     <select
                       {...field}
-                      className="w-full border rounded-md px-3 py-2"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                     >
                       <option value="basse">Basse</option>
                       <option value="normale">Normale</option>
@@ -374,12 +374,12 @@ export function NouvelleDemande() {
 
             {/* Zone de fichiers */}
             <div>
-              <Label className="block text-sm font-medium text-gray-700 mb-2">
+              <Label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Pièces jointes
               </Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors bg-gray-50 dark:bg-gray-700/50">
+                <FileText className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Glissez-déposez vos fichiers ici ou{" "}
                   <button
                     type="button"
@@ -397,12 +397,12 @@ export function NouvelleDemande() {
                       };
                       input.click();
                     }}
-                    className="text-blue-600 hover:text-blue-500"
+                    className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     parcourez
                   </button>
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   PDF, Word, Excel, images jusqu'à 10MB
                 </p>
               </div>
@@ -412,9 +412,9 @@ export function NouvelleDemande() {
                 {fields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="flex flex-col md:flex-row gap-3 items-start md:items-center border rounded-lg p-3"
+                    className="flex flex-col md:flex-row gap-3 items-start md:items-center border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50 dark:bg-gray-700/50"
                   >
-                    <span className="text-sm font-medium flex-1">
+                    <span className="text-sm font-medium flex-1 text-gray-900 dark:text-white">
                       {form.watch(`fichiers.${index}.file`)?.name ||
                         "Fichier sélectionné"}
                     </span>
@@ -450,7 +450,7 @@ export function NouvelleDemande() {
             </div>
 
             {/* Boutons d'action */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-600">
               <Button
                 disabled={isPending}
                 variant="outline"
@@ -480,9 +480,9 @@ export function NouvelleDemande() {
       </div>
 
       {/* Aide */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Conseils pour une demande efficace :</h3>
-        <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
+      <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">Conseils pour une demande efficace :</h3>
+        <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
           <li>Soyez précis dans le titre de votre demande</li>
           <li>Décrivez les étapes qui ont mené au problème</li>
           <li>Mentionnez les messages d'erreur exacts si applicable</li>

@@ -25,21 +25,21 @@ export function StatsCard({ title,description, value, icon: Icon, color, onClick
   };
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''
+    <div className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6 hover:shadow-md dark:hover:shadow-slate-900/20 transition-shadow ${onClick ? 'cursor-pointer' : ''
       }`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
-          {description && <p className="text-sm text-gray-500 mt-2">{description}</p>}
+          <p className="text-sm font-medium text-gray-600 dark:text-slate-400">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-slate-100 mt-1">{value}</p>
+          {description && <p className="text-sm text-gray-500 dark:text-slate-500 mt-2">{description}</p>}
           {trend && (
             <div className="flex items-center mt-2">
-              <span className={`text-sm font-medium ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-sm font-medium ${trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {trend.isPositive ? '+' : ''}{trend.value}%
               </span>
-              <span className="text-sm text-gray-500 ml-2">vs mois dernier</span>
+              <span className="text-sm text-gray-500 dark:text-slate-500 ml-2">vs mois dernier</span>
             </div>
           )}
         </div>

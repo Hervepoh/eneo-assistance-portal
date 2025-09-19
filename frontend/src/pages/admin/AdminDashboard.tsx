@@ -1,8 +1,6 @@
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useAuthContext } from "@/context/auth-provider";
-import { StatsCard, StatsCardProps } from "@/components/dashboard/StatsCard";
-import { FileText, Clock, CheckCircle, AlertTriangle, TrendingUp, Users, Shield, Key, Settings } from 'lucide-react';
-import { DemandeCard } from '../request/DemandeCard';
+import { useNavigate } from "react-router-dom";
+import { StatsCard, StatsCardProps } from "@/components/Dashboard/StatsCard";
+import { Users, Shield, Key, Settings } from 'lucide-react';
 import { useState } from "react";
 
 
@@ -10,7 +8,6 @@ import { useState } from "react";
 
 
 const AdministrationDashboard = () => {
-    const { user } = useAuthContext();
     const navigate = useNavigate();
 
     const stats: StatsCardProps[] = [
@@ -67,7 +64,7 @@ const AdministrationDashboard = () => {
 
     // Génération des statistiques de rôles basées sur les utilisateurs actifs
     const generateRoleStats = () => {
-        const roleCounts = {};
+        const roleCounts: Record<string, number> = {};
 
         // Compter le nombre d'utilisateurs par rôle
         activeUsers.forEach(user => {
@@ -79,7 +76,7 @@ const AdministrationDashboard = () => {
         });
 
         // Définir les permissions pour chaque rôle
-        const rolePermissions = {
+        const rolePermissions: Record<string, string> = {
             'Administrateur': 'Toutes les permissions',
             'Éditeur': 'Créer, modifier, supprimer des contenus',
             'Contributeur': 'Créer et modifier des contenus',
@@ -127,7 +124,7 @@ const AdministrationDashboard = () => {
 
     // Génération des statistiques d'utilisation par module
     const generateModuleUsage = () => {
-        const moduleCounts = {};
+        const moduleCounts: Record<string, number> = {};
 
         // Compter le nombre de permissions par module
         permissions.forEach(permission => {
@@ -144,10 +141,10 @@ const AdministrationDashboard = () => {
     const [moduleUsage] = useState(generateModuleUsage());
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-6 max-w-7xl mx-auto space-y-6 bg-white dark:bg-slate-950 min-h-screen">
             <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">Administration</h2>
-                <p className="text-gray-600 mt-1">Tableau de bord d'administration système</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Administration</h2>
+                <p className="text-gray-600 dark:text-slate-400 mt-1">Tableau de bord d'administration système</p>
             </div>
 
             {/* Statistiques principales */}
@@ -167,21 +164,21 @@ const AdministrationDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {/* Répartition par rôle */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Répartition des utilisateurs par rôle</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Répartition des utilisateurs par rôle</h3>
                     <div className="space-y-3">
                         {roleStats.map((stat) => (
                             <div key={stat.role} className="flex items-center justify-between">
                                 <div>
-                                    <span className="text-sm font-medium text-gray-900">{stat.role}</span>
-                                    <div className="text-xs text-gray-500">{stat.permissions} permissions</div>
+                                    <span className="text-sm font-medium text-gray-900 dark:text-slate-200">{stat.role}</span>
+                                    <div className="text-xs text-gray-500 dark:text-slate-400">{stat.permissions} permissions</div>
                                 </div>
                                 <div className="flex items-center space-x-3">
-                                    <span className="text-sm font-bold text-gray-900">{stat.users}</span>
-                                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-slate-200">{stat.users}</span>
+                                    <div className="w-20 bg-gray-200 dark:bg-slate-700 rounded-full h-2 relative overflow-hidden">
                                         <div
-                                            className="bg-blue-600 h-2 rounded-full"
-                                            style={{ width: `${(stat.users / activeUsers.length) * 100}%` }}
+                                            className={`bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300 absolute left-0 top-0`}
+                                            style={{ width: `${Math.min(Math.round((stat.users / activeUsers.length) * 100), 100)}%` }}
                                         />
                                     </div>
                                 </div>
@@ -191,18 +188,18 @@ const AdministrationDashboard = () => {
                 </div>
 
                 {/* Utilisation des modules */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Permissions par module</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-4">Permissions par module</h3>
                     <div className="space-y-3">
                         {Object.entries(moduleUsage).map(([module, count]) => (
                             <div key={module} className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-600 capitalize">{module}</span>
+                                <span className="text-sm font-medium text-gray-600 dark:text-slate-300 capitalize">{module}</span>
                                 <div className="flex items-center space-x-3">
-                                    <span className="text-sm font-bold text-gray-900">{count}</span>
-                                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-slate-200">{count as number}</span>
+                                    <div className="w-20 bg-gray-200 dark:bg-slate-700 rounded-full h-2 relative overflow-hidden">
                                         <div
-                                            className="bg-green-600 h-2 rounded-full"
-                                            style={{ width: `${(count / permissions.length) * 100}%` }}
+                                            className={`bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all duration-300 absolute left-0 top-0`}
+                                            style={{ width: `${Math.min(Math.round(((count as number) / permissions.length) * 100), 100)}%` }}
                                         />
                                     </div>
                                 </div>
@@ -213,39 +210,39 @@ const AdministrationDashboard = () => {
             </div>
 
             {/* Quick actions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-blue-900 mb-4">Actions rapides</h3>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4">Actions rapides</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button
                         onClick={() => navigate('/admin/users')}
-                        className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg transition-colors bg-blue-600 text-white  hover:bg-blue-700 "
+                        className="flex items-center space-x-3 p-4 border border-gray-200 dark:border-slate-700 rounded-lg transition-colors bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
                     >
                         <Users className="w-8 h-8" />
                         <div className="text-left">
                             <div className="font-medium">Gérer les utilisateurs</div>
-                            <div className="text-sm text-gray-50">Créer, modifier, désactiver</div>
+                            <div className="text-sm text-gray-50 dark:text-blue-100">Créer, modifier, désactiver</div>
                         </div>
                     </button>
 
                     <button
                         onClick={() => navigate('/admin/roles')}
-                        className="flex items-center space-x-3 p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex items-center space-x-3 p-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                     >
-                        <Shield className="w-8 h-8 text-green-600" />
+                        <Shield className="w-8 h-8 text-green-600 dark:text-green-400" />
                         <div className="text-left">
-                            <div className="font-medium text-gray-900">Configurer les rôles</div>
-                            <div className="text-sm text-gray-500">Définir les permissions</div>
+                            <div className="font-medium text-gray-900 dark:text-slate-100">Configurer les rôles</div>
+                            <div className="text-sm text-gray-500 dark:text-slate-400">Définir les permissions</div>
                         </div>
                     </button>
 
                     <button
                         onClick={() => navigate('/admin/permissions')}
-                        className="flex items-center space-x-3 p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex items-center space-x-3 p-4 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                     >
-                        <Key className="w-8 h-8 text-purple-600" />
+                        <Key className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                         <div className="text-left">
-                            <div className="font-medium text-gray-900">Attribuer permissions</div>
-                            <div className="text-sm text-gray-500">Gérer les accès</div>
+                            <div className="font-medium text-gray-900 dark:text-slate-100">Attribuer permissions</div>
+                            <div className="text-sm text-gray-500 dark:text-slate-400">Gérer les accès</div>
                         </div>
                     </button>
                 </div>

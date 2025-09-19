@@ -154,9 +154,9 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
         cell: info => {
           const val = info.getValue();
           const color =
-            val === "critique" ? "bg-red-100 text-red-700" :
-              val === "haute" ? "bg-orange-100 text-orange-700" :
-                val === "normale" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700";
+            val === "critique" ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300" :
+              val === "haute" ? "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300" :
+                val === "normale" ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
           return <Badge className={`${color} capitalize`}>{val}</Badge>;
         }
       }),
@@ -165,14 +165,14 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
         cell: info => {
           const s = info.getValue() as string;
           const map: Record<string, string> = {
-            "DRAFT": "bg-gray-100 text-gray-700",
-            "soumise": "bg-blue-100 text-blue-700",
-            "en_cours": "bg-yellow-100 text-yellow-800",
-            "resolue": "bg-green-100 text-green-700",
-            "rejetee": "bg-red-100 text-red-700",
-            "fermee": "bg-slate-100 text-slate-700"
+            "DRAFT": "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
+            "soumise": "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300",
+            "en_cours": "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300",
+            "resolue": "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300",
+            "rejetee": "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300",
+            "fermee": "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
           };
-          return <Badge className={`${map[s] || "bg-gray-100 text-gray-700"} capitalize`}>{s.replace('_', ' ')}</Badge>;
+          return <Badge className={`${map[s] || "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"} capitalize`}>{s.replace('_', ' ')}</Badge>;
         }
       }),
       columnHelper.display({
@@ -348,7 +348,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
         )
       })
     ],
-    [onDemandeClick, handleValidate, handleReject, handleSubmit, isPending, isRejecting, isValidating, mode, rejectDialogOpen, validateDialogOpen]
+    [onDemandeClick, handleValidate, handleReject, handleSubmit, isPending, isRejecting, isValidating, mode, rejectDialogOpen, validateDialogOpen, rejectReason]
   );
 
   // Client-side global filter (simple)
@@ -358,7 +358,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     return demandes.filter(d =>
       d.titre.toLowerCase().includes(q) ||
       d.description.toLowerCase().includes(q) ||
-      `${d.demandeur?.name ?? ""} ${d.demandeur?.name ?? ""}`.toLowerCase().includes(q)
+      `${d.requestor?.prenom ?? ""} ${d.requestor?.nom ?? ""}`.toLowerCase().includes(q)
     );
   }, [globalFilter, demandes]);
 
@@ -380,7 +380,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     const rows = filteredRows.map(r => ({
       id: r.id,
       titre: r.titre,
-      demandeur: `${r.demandeur1?.prenom ?? ""} ${r.demandeur?.nom ?? ""}`,
+      demandeur: `${r.requestor?.prenom ?? ""} ${r.requestor?.nom ?? ""}`,
       region: r.region,
       delegation: r.delegation,
       agence: r.agence,
@@ -397,28 +397,8 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
     URL.revokeObjectURL(url);
   }
 
-  function downloadRowCsv(row: Demande) {
-    const csv = Papa.unparse([{
-      id: row.id,
-      titre: row.titre,
-      demandeur: `${row.demandeur?.prenom ?? ""} ${row.demandeur?.nom ?? ""}`,
-      region: row.region,
-      delegation: row.delegation,
-      agence: row.agence,
-      priorite: row.priorite,
-      statut: row.statut
-    }]);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `demande_${row.id}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
-    <div className="bg-white rounded-lg border p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 w-full md:w-auto">
           <Input
@@ -435,11 +415,13 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
           </Button>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Rows</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Rows</span>
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="border rounded px-2 py-1"
+              className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              title="Nombre de lignes par page"
+              aria-label="Nombre de lignes par page"
             >
               {[5, 10, 20, 50].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
@@ -450,21 +432,26 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y table-auto">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 dark:bg-gray-700">
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
                   <th
                     key={header.id}
                     colSpan={header.colSpan}
-                    className="px-3 py-2 text-left text-xs font-medium text-gray-600"
+                    className="px-3 py-2 text-left text-xs font-medium text-gray-600 dark:text-gray-300"
                   >
                     {header.isPlaceholder ? null : (
                       <div
                         role="button"
                         onClick={header.column.getToggleSortingHandler()}
                         className="flex items-center gap-2 select-none"
-                        aria-sort={header.column.getIsSorted() ? (header.column.getIsSorted() === "asc" ? "ascending" : "descending") : "none"}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            header.column.getToggleSortingHandler()?.(e);
+                          }
+                        }}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         <span className="text-xs text-gray-400">
@@ -478,11 +465,11 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
             ))}
           </thead>
 
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {table.getRowModel().rows.slice(0, pageSize).map(row => (
-              <tr key={row.id} className="hover:bg-gray-50">
+              <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-3 py-3 text-sm text-gray-700">
+                  <td key={cell.id} className="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -494,7 +481,7 @@ export function DemandeDataTable({ demandes, onDemandeClick, mode }: Props) {
 
       {/* Pagination simple (client-side) */}
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
           Affichage {Math.min(1, filteredRows.length)} - {Math.min(pageSize, filteredRows.length)} sur {filteredRows.length}
         </div>
         <div className="flex items-center gap-2">

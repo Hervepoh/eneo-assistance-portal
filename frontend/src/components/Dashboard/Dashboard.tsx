@@ -1,5 +1,5 @@
 import { FileText, Clock, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
-import { StatsCard } from './StatsCard';
+import { StatsCard } from '@/components/Dashboard/StatsCard';
 import { DemandeCard } from '../request/DemandeCard';
 import { Demande } from '@/types';
 
@@ -46,14 +46,14 @@ export function Dashboard({
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border dark:border-slate-800 p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 dark:bg-slate-800 rounded w-3/4 mb-4"></div>
+              <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -77,8 +77,8 @@ export function Dashboard({
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Tableau de bord</h2>
-        <p className="text-gray-600 mt-1">Vue d'ensemble de vos demandes d'assistance</p>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Tableau de bord</h2>
+        <p className="text-gray-600 dark:text-slate-400 mt-1">Vue d'ensemble de vos demandes d'assistance</p>
       </div>
 
       {/* Statistiques principales */}

@@ -1,6 +1,4 @@
-import { Dashboard } from "@/components/dashboard/Dashboard";
-import EnableMfa from "@/components/EnableMfa";
-import Sessions from "@/components/Sessions";
+import { Dashboard } from "@/components/Dashboard/Dashboard";
 
 const Home = () => {
   return (

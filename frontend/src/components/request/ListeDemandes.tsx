@@ -178,7 +178,7 @@ export function ListeDemandes({
       <div className="p-6 max-w-7xl mx-auto flex justify-center items-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement des demandes...</p>
+          <p className="text-gray-600 dark:text-slate-400">Chargement des demandes...</p>
         </div>
       </div>
     );
@@ -200,8 +200,8 @@ export function ListeDemandes({
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{title}</h2>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">{title}</h2>
+          <p className="text-gray-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
             {totalCount} demande{totalCount !== 1 ? 's' : ''} trouvée{totalCount !== 1 ? 's' : ''}
           </p>
         </div>
@@ -217,7 +217,7 @@ export function ListeDemandes({
           </Button>
 
           {/* Boutons de changement de vue */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1 w-full sm:w-auto justify-center">
+          <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-lg p-1 w-full sm:w-auto justify-center">
             <Button
               variant={viewType === 'card' ? 'default' : 'ghost'}
               size="sm"
@@ -243,7 +243,7 @@ export function ListeDemandes({
         <div className="bg-white rounded-lg border p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="sm:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-slate-600 w-4 h-4" />
               <Input
                 placeholder="Rechercher..."
                 value={searchTerm}
@@ -253,7 +253,7 @@ export function ListeDemandes({
             </div>
 
             <Select value={selectedCategorie} onValueChange={setSelectedCategorie}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full dark:text-slate-600">
                 <SelectValue placeholder="Toutes catégories" />
               </SelectTrigger>
               <SelectContent>
@@ -267,7 +267,7 @@ export function ListeDemandes({
             </Select>
 
             <Select value={selectedStatut} onValueChange={setSelectedStatut}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full dark:text-slate-600">
                 <SelectValue placeholder="Tous statuts" />
               </SelectTrigger>
               <SelectContent>
@@ -281,7 +281,7 @@ export function ListeDemandes({
             </Select>
 
             <Select value={selectedPriorite} onValueChange={setSelectedPriorite}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full dark:text-slate-600">
                 <SelectValue placeholder="Toutes priorités" />
               </SelectTrigger>
               <SelectContent>
@@ -295,7 +295,7 @@ export function ListeDemandes({
             </Select>
 
             <Select value={selectedPriorite} onValueChange={setSelectedPriorite}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full dark:text-slate-600">
                 <SelectValue placeholder="Toutes les régions" />
               </SelectTrigger>
               <SelectContent>
@@ -344,8 +344,8 @@ export function ListeDemandes({
           {hasActiveFilters && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <Filter className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">Filtres actifs:</span>
+                <Filter className="w-4 h-4 text-gray-400 dark:text-slate-500" />
+                <span className="text-sm text-gray-600 dark:text-slate-400">Filtres actifs:</span>
                 {searchTerm && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     Recherche: "{searchTerm}"
@@ -405,9 +405,9 @@ export function ListeDemandes({
         )
       ) : (
         <div className="bg-white rounded-lg border p-8 sm:p-12 text-center">
-          <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune demande trouvée</h3>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <Eye className="w-12 h-12 text-gray-400 dark:text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">Aucune demande trouvée</h3>
+          <p className="text-gray-600 dark:text-slate-400 text-sm sm:text-base">
             {showFilters && hasActiveFilters
               ? 'Aucune demande ne correspond à vos critères de recherche'
               : 'Aucune demande disponible pour le moment'}
